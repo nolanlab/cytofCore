@@ -1,5 +1,6 @@
 export(
     "cytofCore.read.conf",
     "cytofCore.read.imd",
+    "cytofCore.write.FCS",
     "cytofCore.extract.cells"
 )
