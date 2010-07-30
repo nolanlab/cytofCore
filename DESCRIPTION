@@ -1,0 +1,9 @@
+Package: cytofCore
+Title: cytofCore: Analysis tools for CyToF Mass Cytometer Data
+Version: 0.1
+Author: M. Linderman
+Description: Provides tools for working with CyToF Mass Cytometer Data
+Maintainer: M. Linderman <mlinderm@stanford.edu>
+Depends: R (>= 2.8.1), flowCore
+Imports: flowCore
+License: GPL-2
