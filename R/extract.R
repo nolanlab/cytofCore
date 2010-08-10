@@ -34,9 +34,28 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
     noise[,1] <- (cumsum(runs$lengths))[cells-2]  # Leading push for region preceding cell
     noise[,2] <- runs$lengths[cells-1]  # Noise region duration
     for (i in 1:nrow(noise)) {
-	noise_range <- seq(noise[i,1],length.out=noise[i,2])
-	noise[i,3:ncol(noise)] <- colSums(data[noise_range,cols]) / noise[i,2]  # Produce per push noise estimate
+	if (noise[i,2] > 1) {	
+	    noise_range <- seq(noise[i,1],length.out=noise[i,2])
+	    noise[i,3:ncol(noise)] <- colSums(data[noise_range,cols]) / noise[i,2]  # Produce per push noise estimate
+	} else {
+	    noise[i,3:ncol(noise)] <- data[noise[i,1],cols]
+	}
     }
     colnames(noise) <- c("Leading_Push", "Duration",colnames(data)[cols])
-    list(cells=found, noise=noise)
+    list(cells=found, noise=noise, intensity=d)
+}
+
+cytofCore.filter.cells <- function(cells) {
+    fail <- c()
+    for (i in 1:nrow(cells$cells)) {
+	beg <- cells$cells[i,1]
+	len <- cells$cells[i,3]
+	
+	slope <- cells$intensity[seq(beg+1,length.out=len)] - cells$intensity[seq(beg,length.out=len)]
+	runs  <- rle(slope > 0)
+	if (length(runs$values) > 2) {  # More than one zero crossing ...
+	    fail <- c(fail, i)
+	}
+    }
+    return(fail) 
 }
