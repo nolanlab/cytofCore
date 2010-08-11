@@ -45,6 +45,25 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
     list(cells=found, noise=noise, intensity=d)
 }
 
+cytofCore.extract.native <- function(file, conf, pulse_thresh=3.0, num_pushes=.Machine$integer.max, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75) {
+
+	# Load and format "conf" values for compute dual counts
+	if (is.character(conf) && file.exists(conf)) {
+		conf <- read.table(conf,header=TRUE)
+	}
+	conf <- as.matrix(conf[,c("Intercept","Slope")])
+	storage.mode(conf) <- "double"
+
+	# Generate smoothing filter
+	smooth <-  dnorm((-num_sigma*sigma):(num_sigma*sigma),sd=sigma)
+
+	.Call("CC_extract", file, conf, 
+	      list(smooth=smooth, pulse.threshold=pulse_thresh, 
+			   cell.threshold=thresh, cell.min.length=as.integer(min_length), cell.max.length=as.integer(max_length),
+			   num.pushes=as.integer(num_pushes)))
+
+}
+
 cytofCore.filter.cells <- function(cells) {
     fail <- c()
     for (i in 1:nrow(cells$cells)) {
