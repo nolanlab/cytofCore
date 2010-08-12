@@ -65,11 +65,11 @@ namespace {
 		size_t        Push;
 
 	public:
-		Dueler(const double* conf, size_t analytes, double pulse_threshold, size_t max_len=256) 
+		Dueler(const double* conf, size_t analytes, double pulse_threshold, size_t max_pushes=256) 
 			: Conf(conf), Analytes(analytes), PulseThreshold(pulse_threshold)
 		{
 			// Create a cicular buffer for dual counts
-			size_t p = std::ceil(std::log(max_len)/std::log(2.));  // Next largest power of two
+			size_t p = std::ceil(std::log(max_pushes)/std::log(2.));  // Next largest power of two
 			
 			Buf = Calloc((1<<p)*Analytes, double);
 			BufMask = ~(std::numeric_limits<size_t>::max() << p);
@@ -99,7 +99,6 @@ namespace {
 		void integratePushes(double* integral, size_t begin, size_t end) const {
 			assert((end - begin) <= BufMask);
 			// Integrate by analyte across specified pushes
-			std::fill(integral, integral+Analytes, 0.);
 			for (size_t p=begin; p<end; p++) {
 				double* dual = Buf + (p & BufMask) * Analytes;
 				for (size_t a=0; a<Analytes; a++) {
@@ -115,33 +114,35 @@ namespace {
 		const double* Coeffs;
 		size_t		  Len;
 
-		double*       Buf;
+		double		  *RawBuf, *OutBuf;
 		size_t        BufPtr;
 		size_t        BufMask;
 
 		int64_t       Push;
 
 	public:
-		Smoother(const double* coeffs, size_t len) : Coeffs(coeffs), Len(len) {
+		Smoother(const double* coeffs, size_t len, size_t max_samples=256) : Coeffs(coeffs), Len(len) {
 			// Create a circular buffer for filter
-			size_t p = std::ceil(std::log(len)/std::log(2.));  // Next largest power of two
+			size_t p = std::ceil(std::log(max_samples)/std::log(2.));  // Next largest power of two
 			
-			Buf     = Calloc(1<<p, double);
-			BufPtr  = 0;
+			RawBuf = Calloc(1<<p, double);
+			OutBuf = Calloc(1<<p, double);
+			BufPtr = 0;
 			BufMask = ~(std::numeric_limits<size_t>::max() << p);
 
 			Push = -lag();
 		}
-		~Smoother() { Free(Buf); }
+		~Smoother() { Free(RawBuf); Free(OutBuf); }
 
 		size_t lag() const { return Len/2+1; }
 
 		double fromSample(double new_sample) {
-			Buf[BufPtr & BufMask] = new_sample;
+			RawBuf[BufPtr & BufMask] = new_sample;
 			
 			double acc = 0.0;
 			for (size_t s=0, p=(BufPtr+1)-Len; s<Len; s++)
-				acc += Buf[(p+s) & BufMask] * Coeffs[s];
+				acc += RawBuf[(p+s) & BufMask] * Coeffs[s];
+			OutBuf[BufPtr & BufMask] = acc;
 			return acc;
 		}
 
@@ -150,9 +151,28 @@ namespace {
 	};
 
 	enum ExtractState {
-		Noise,
+		InNoise,
 		ACell
 	};
+
+	class Observation {
+	public:
+		static size_t Analytes;
+		static void Observation_global(size_t analytes) { Analytes = analytes; }
+
+	public:
+		size_t Start, End; // [Start, End)
+		double *Obs;
+
+		Observation(size_t start) : Start(start), End(start), Obs(NULL) {}
+		~Observation() { if (Obs) Free(Obs); }
+
+		void initObs() { if (!Obs) Obs = Calloc(Analytes, double); }
+		double* getObs() { this->initObs(); return Obs; }
+
+	};
+	size_t Observation::Analytes;
+
 
 	class Cell {
 	public:
@@ -161,22 +181,23 @@ namespace {
 
 	public:
 		size_t Start, End;  // [Start, End)
-		double *Values;
+		double *Obs;
 
-		Cell(size_t start) : Start(start), End(start), Values(NULL) {}
-		~Cell() { if (Values) { Free(Values); } }
+		Cell(size_t start) : Start(start), End(start), Obs(NULL) {}
+		~Cell() { if (Obs) { Free(Obs); } }
 
 		size_t getStart() const { return Start; } 
 
 		size_t getEnd() const { return End; }
 		void setEnd(size_t end) { End = end; }
 
-		double* getCell() { if (Values == NULL) { Values = Calloc(Analytes, double); } return Values; }  
+		double* getCell() { if (Obs == NULL) { Obs = Calloc(Analytes, double); } return Obs; }  
 
 		size_t length() const { return End - Start; }
 	};
 	size_t Cell::Analytes;
 
+	
 	void
 	extract(int fh, const Options& opt, std::vector<Cell*>& cells) {
 
@@ -184,11 +205,15 @@ namespace {
 		Dueler   dueler(opt.conf, opt.analytes, opt.pulse_threshold);
 		Smoother smoother(opt.smooth, opt.smooth_len); 
 	
-		ExtractState state = Noise;
+		ExtractState state = InNoise;
 		
 		Cell::Cell_global(opt.analytes);
 		Cell* cell = NULL;
-	
+
+		Observation::Observation_global(opt.analytes);
+		Observation *noise_act = new Observation(0); noise_act->initObs();  // Initialize "initial" baseline noise
+		Observation *noise_tmp = new Observation(0); noise_tmp->initObs();  // Initialize "in progress" noise
+
 		// Initialize buffers to read from the disk in "opt.blk_size" chunks 
 		size_t   read_buf_len = opt.blk_size + (2*opt.analytes-1) * 2;
 		uint8_t *read_buf = Calloc(read_buf_len, uint8_t), 
@@ -211,9 +236,8 @@ namespace {
 				double sm = smoother.fromSample( dueler.pushTotal() );  
 
 				switch (state) {
-					case Noise: {
-						// We have found a potential cell ...
-						if (sm >= opt.cell_threshold) {
+					case InNoise: {
+						if (sm >= opt.cell_threshold) { // We have found a potential cell ...
 							assert(cell == NULL);
 							state = ACell;  // Transition to "cell" state
 							cell = new Cell(smoother.getPush());
@@ -224,7 +248,7 @@ namespace {
 						// We have found the end of a cell ...
 						if (sm < opt.cell_threshold) {
 							assert(cell);
-							state = Noise;  // Transition to "noise" state
+							state = InNoise;  // Transition to "noise" state
 
 							cell->setEnd(smoother.getPush());
 
