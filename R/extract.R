@@ -1,4 +1,4 @@
-cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75, freq=90000) {
+cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75, freq=77000) {
     if (!is.matrix(data)) {
 	stop("'data' must be a matrix");
     }
@@ -21,7 +21,7 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
     cells <- which(runs$value & runs$lengths >= min_length & runs$lengths <= max_length)
     
     found <- matrix(nrow=length(cells),ncol=length(cols)+3)
-    found[,1] <- (cumsum(runs$lengths))[cells-1]  # Leading push
+    found[,1] <- (cumsum(runs$lengths))[cells-1] + 1 # Leading push
     found[,2] <- found[,1]/freq
     found[,3] <- runs$lengths[cells]  # Cell length 
     for (i in 1:nrow(found)) {
@@ -45,22 +45,37 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
     list(cells=found, noise=noise, intensity=d)
 }
 
-cytofCore.extract.native <- function(file, conf, pulse_thresh=3.0, num_pushes=.Machine$integer.max, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75) {
+cytofCore.extract.native <- function(file, conf, 
+	pulse_thresh=3.0, num_pushes=.Machine$integer.max, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75, noise.subtraction=TRUE,
+	freq=77000) {
 
 	# Load and format "conf" values for compute dual counts
 	if (is.character(conf) && file.exists(conf)) {
 		conf <- read.table(conf,header=TRUE)
 	}
-	conf <- as.matrix(conf[,c("Intercept","Slope")])
-	storage.mode(conf) <- "double"
+	toDual <- as.matrix(conf[,c("Intercept","Slope")])
+	storage.mode(toDual) <- "double"
 
 	# Generate smoothing filter
 	smooth <-  dnorm((-num_sigma*sigma):(num_sigma*sigma),sd=sigma)
 
-	.Call("CC_extract", file, conf, 
-	      list(smooth=smooth, pulse.threshold=pulse_thresh, 
-			   cell.threshold=thresh, cell.min.length=as.integer(min_length), cell.max.length=as.integer(max_length),
-			   num.pushes=as.integer(num_pushes)))
+	# Extract cells
+	r <- .Call(
+			"CC_extract", 
+			file, toDual, 
+			list(
+			smooth=smooth, pulse.threshold=pulse_thresh, cell.threshold=thresh, 
+			cell.min.length=as.integer(min_length), cell.max.length=as.integer(max_length),
+			noise.subtraction=noise.subtraction,
+			num.pushes=as.integer(num_pushes)
+			))
+	r$cells.extent <- cbind(r$cells.extent[,1], r$cells.extent[,1]/freq*1000, r$cells.extent[,2]) 
+
+	# Build return data structure to mimic output from CyToF software
+	analytes <- paste(round(conf$Mass),conf$Symbol,sep="")
+	colnames(r$cells.obs) <- analytes
+	colnames(r$cells.extent) <- c("Leading_Push","Time","Cell_length")
+	list(cells.found=cbind(r$cells.extent,r$cells.obs),quality=r$cells.quality)
 
 }
 

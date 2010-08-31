@@ -42,6 +42,8 @@ namespace {
 
 		size_t  min_cell_length;
 		size_t  max_cell_length;
+		bool    noise_subtraction;
+		size_t  min_noise_length;
 
 		size_t  num_pushes;
 		ssize_t blk_size;
@@ -97,7 +99,7 @@ namespace {
 		}
 
 		void integratePushes(double* integral, size_t begin, size_t end) const {
-			assert((end - begin) <= BufMask);
+			assert((Push - begin) < BufMask && end < Push);
 			// Integrate by analyte across specified pushes
 			for (size_t p=begin; p<end; p++) {
 				double* dual = Buf + (p & BufMask) * Analytes;
@@ -134,11 +136,10 @@ namespace {
 		}
 		~Smoother() { Free(RawBuf); Free(OutBuf); }
 
-		size_t lag() const { return Len/2+1; }
+		size_t lag() const { return Len/2; }
 
 		double fromSample(double new_sample) {
-			RawBuf[BufPtr & BufMask] = new_sample;
-			
+			RawBuf[BufPtr & BufMask] = new_sample;			
 			double acc = 0.0;
 			for (size_t s=0, p=(BufPtr+1)-Len; s<Len; s++)
 				acc += RawBuf[(p+s) & BufMask] * Coeffs[s];
@@ -148,6 +149,20 @@ namespace {
 
 		int64_t getPush() const { return Push; }
 		void advPush() { ++BufPtr; ++Push; }
+
+		class Iterator {
+			double *Buf;
+			size_t Mask, P;
+		public:
+			Iterator(double *buf, size_t mask, size_t p) : Buf(buf), Mask(mask), P(p) {}
+			double   operator* () const { return *(Buf + (P & Mask)); }
+			bool     operator!=(const Iterator& rhs) { return P != rhs.P; }
+			Iterator operator++() { ++P; return *this; } 
+			Iterator operator+(size_t i) const { return Iterator(Buf, Mask, P+i); }
+		};
+
+		Iterator iterator(size_t idx) const { return Iterator(OutBuf, BufMask, (size_t)((int64_t)idx-Push+(int64_t)BufPtr)); }
+
 	};
 
 	enum ExtractState {
@@ -163,65 +178,76 @@ namespace {
 	public:
 		size_t Start, End; // [Start, End)
 		double *Obs;
+		double Quality;
 
-		Observation(size_t start) : Start(start), End(start), Obs(NULL) {}
+		Observation(size_t start) : Start(start), End(start), Obs(NULL), Quality(1.) {}
 		~Observation() { if (Obs) Free(Obs); }
+
+		void reset(size_t start) { Start = start; std::fill(Obs,Obs+Analytes,0.); }
 
 		void initObs() { if (!Obs) Obs = Calloc(Analytes, double); }
 		double* getObs() { this->initObs(); return Obs; }
 
-	};
-	size_t Observation::Analytes;
+		void setStart(size_t start) { Start = start; }
+		size_t getStart() const { return Start; }
 
-
-	class Cell {
-	public:
-		static size_t Analytes;
-		static void Cell_global(size_t analytes) { Analytes = analytes; }	
-
-	public:
-		size_t Start, End;  // [Start, End)
-		double *Obs;
-
-		Cell(size_t start) : Start(start), End(start), Obs(NULL) {}
-		~Cell() { if (Obs) { Free(Obs); } }
-
-		size_t getStart() const { return Start; } 
-
-		size_t getEnd() const { return End; }
 		void setEnd(size_t end) { End = end; }
+		size_t getEnd() const { return End; }
 
-		double* getCell() { if (Obs == NULL) { Obs = Calloc(Analytes, double); } return Obs; }  
+		double getQuality() const { return Quality; }
+		void setQuality(double q) { Quality = q; }
 
 		size_t length() const { return End - Start; }
 	};
-	size_t Cell::Analytes;
+	size_t Observation::Analytes;
 
+	bool length_filter(Observation* cell, const Smoother& smoother, const Dueler& dueler, const Options& opt) {
+		return cell->length() >= opt.min_cell_length && cell->length() <= opt.max_cell_length;
+	}
+
+	bool slope_filter(Observation* cell, const Smoother& smoother, const Dueler& dueler, const Options& opt) {
+		assert(cell->getEnd() > 2);
+		size_t cross = 0;			
+		for (Smoother::Iterator b=smoother.iterator(cell->getStart()), e=smoother.iterator(cell->getEnd()-2); b!=e; ++b) {
+			double sm0 = *b, sm1 = *(b+1), sm2 = *(b+2);
+			double slope1 = sm1 - sm0, slope2 = sm2 - sm1;
+			if (sign(slope2) != 0 && sign(slope1) != sign(slope2))
+				cross++;
+		}		
+		if (cross > 1)
+			cell->setQuality(0.);
+		return true;  // We don't block cells with multiple crossing, but do mark them as low quality
+	}
+
+	void
+	subtract_noise(Observation* cell, Observation* noise) {
+		double *cell_d = cell->getObs(), *noise_d = noise->getObs();
+		for (size_t a=0; a<Observation::Analytes; a++)
+			cell_d[a] -= (noise_d[a] / noise->length() * cell->length()); 
+	}
 	
 	void
-	extract(int fh, const Options& opt, std::vector<Cell*>& cells) {
+	extract(int fh, const Options& opt, std::vector<Observation*>& cells) {
 
 		// Initialize state of extraction
 		Dueler   dueler(opt.conf, opt.analytes, opt.pulse_threshold);
 		Smoother smoother(opt.smooth, opt.smooth_len); 
-	
 		ExtractState state = InNoise;
-		
-		Cell::Cell_global(opt.analytes);
-		Cell* cell = NULL;
-
+	
 		Observation::Observation_global(opt.analytes);
+		Observation *cell = NULL;
 		Observation *noise_act = new Observation(0); noise_act->initObs();  // Initialize "initial" baseline noise
 		Observation *noise_tmp = new Observation(0); noise_tmp->initObs();  // Initialize "in progress" noise
 
 		// Initialize buffers to read from the disk in "opt.blk_size" chunks 
-		size_t   read_buf_len = opt.blk_size + (2*opt.analytes-1) * 2;
+		size_t   read_buf_len = opt.blk_size + 4*opt.analytes;
 		uint8_t *read_buf = Calloc(read_buf_len, uint8_t), 
 				*read_end = read_buf + read_buf_len, 
 				*read_ptr = read_buf;
 
 		while (dueler.getPush() < opt.num_pushes) {
-		
+	
+			assert(read_ptr + opt.blk_size < read_buf + read_buf_len);
 			ssize_t bytes_read = read(fh, read_ptr, opt.blk_size); 
 			if (bytes_read < 0)
 				error("File read failed\n");
@@ -230,44 +256,57 @@ namespace {
 			read_end = read_ptr + bytes_read;
 
 			uint16_t *imd_push; 
-			for (imd_push = (uint16_t*)read_ptr; (imd_push+2*opt.analytes)<=(uint16_t*)read_end; imd_push+=2*opt.analytes) {
+			for (imd_push = (uint16_t*)read_buf; (imd_push+2*opt.analytes)<=(uint16_t*)read_end; imd_push+=2*opt.analytes) {
 
 				dueler.fromIMD(imd_push);			
 				double sm = smoother.fromSample( dueler.pushTotal() );  
+			
+				if (smoother.getPush() >= 0) {
+					switch (state) {
+						case InNoise: {
+							if (sm >= opt.cell_threshold) { // We have found a potential cell ...
+								assert(cell == NULL);
+								
+								state = ACell;  // Transition to "cell" state
+								cell = new Observation(smoother.getPush());
 
-				switch (state) {
-					case InNoise: {
-						if (sm >= opt.cell_threshold) { // We have found a potential cell ...
-							assert(cell == NULL);
-							state = ACell;  // Transition to "cell" state
-							cell = new Cell(smoother.getPush());
+								// Noise filters
+								noise_tmp->setEnd(smoother.getPush());
+								if (noise_tmp->length() >= opt.min_noise_length) {
+									std::swap(noise_tmp, noise_act);
+								}	
+																
+							} else
+								dueler.integratePushes(noise_tmp->getObs(), smoother.getPush(), smoother.getPush()+1);
+							break;
 						}
-						break;
-					}
-					case ACell: {
-						// We have found the end of a cell ...
-						if (sm < opt.cell_threshold) {
-							assert(cell);
-							state = InNoise;  // Transition to "noise" state
+						case ACell: {
+							// We have found the end of a cell ...
+							if (sm < opt.cell_threshold) {
+								assert(cell);
 
-							cell->setEnd(smoother.getPush());
-
-							// Cell filters
-							if (cell->length() < opt.min_cell_length || cell->length() > opt.max_cell_length)
-								goto CELL_CLEANUP;
-
-							dueler.integratePushes(cell->getCell(), cell->getStart(), cell->getEnd());
-							cells.push_back(cell);
-
-							cell = NULL;
-							break;						
-CELL_CLEANUP:						
-							delete cell;
-							cell = NULL;
-							break;	
+								state = InNoise;  // Transition to "noise" state
+								noise_tmp->reset(smoother.getPush());
+								dueler.integratePushes(noise_tmp->getObs(), smoother.getPush(), smoother.getPush()+1);
+								
+								// Cell filters
+								cell->setEnd(smoother.getPush());
+								if (!length_filter(cell, smoother, dueler, opt) ||
+									!slope_filter (cell, smoother, dueler, opt))
+									delete cell;
+								else {
+									dueler.integratePushes(cell->getObs(), cell->getStart(), cell->getEnd());
+									// Subtract out most recently valid noise
+									if (opt.noise_subtraction && noise_act->length() > 0)
+										subtract_noise(cell, noise_act);
+									cells.push_back(cell);
+								}
+								cell = NULL;
+								break;						
+							}
 						}
-					}
-				}
+					}  // switch(state) ...
+				}  // if (smoother.getPush() ...
 
 				smoother.advPush();
 				dueler.advPush();
@@ -319,13 +358,15 @@ extern "C" {
 		if (NULL_USER_OBJECT != (arg = getListElement(options, NAME))) { \
 			opt.OPT = SET; \
 		} else { \
-			opt.pulse_threshold = DEFAULT; \
+			opt.OPT = DEFAULT; \
 		}
 		
 		ARG("pulse.threshold", pulse_threshold, *(REAL(arg)), 3.0);	
 		ARG("cell.threshold", cell_threshold, *(REAL(arg)), 10.);
 		ARG("cell.min.length", min_cell_length, (size_t)*(INTEGER(arg)), 10);
 		ARG("cell.max.length", max_cell_length, (size_t)*(INTEGER(arg)), 75);
+		ARG("noise.subtraction", noise_subtraction, *(LOGICAL(arg)), true);
+		ARG("noise.min.length", min_noise_length, (size_t)*(INTEGER(arg)), 30);
 		ARG("num.pushes", num_pushes, (size_t)*(INTEGER(arg)), std::numeric_limits<size_t>::max());
 
 	
@@ -354,7 +395,7 @@ extern "C" {
 		 * Extract cells from IMD file
 		 */ 
 		
-		std::vector<Cell*> cells;
+		std::vector<Observation*> cells;
 
 		extract(fh, opt, cells);
 
@@ -365,22 +406,24 @@ extern "C" {
 		 * Build return R data structure
 		 */
 
-		SEXP ans, names, cells_extent, cells_obs; int n_protected = 0;
+		SEXP ans, names, cells_extent, cells_obs, cells_qual; int n_protected = 0;
 
-		PROTECT(ans = allocVector(VECSXP,2)); n_protected++;
-		PROTECT(names = allocVector(STRSXP,2)); n_protected++;
+		PROTECT(ans = allocVector(VECSXP,3)); n_protected++;
+		PROTECT(names = allocVector(STRSXP,3)); n_protected++;
 
 		size_t num_cells = cells.size();
 		
 		PROTECT(cells_extent = allocMatrix(INTSXP, num_cells, 2)); n_protected++;
 		PROTECT(cells_obs = allocMatrix(REALSXP, num_cells, opt.analytes)); n_protected++;
+		PROTECT(cells_qual = allocVector(REALSXP, num_cells)); n_protected++;
 		for (size_t i=0; i<num_cells; i++) {
-			Cell *c = cells[i];
+			Observation *c = cells[i];
 			// Recall R data structures are column major
 			INTEGER(cells_extent)[i] = (int)(c->getStart());
 			INTEGER(cells_extent)[i+num_cells] = (int)(c->length());
 			for (size_t a=0; a<opt.analytes; a++)
-				REAL(cells_obs)[a*num_cells+i] = c->getCell()[a];
+				REAL(cells_obs)[a*num_cells+i] = c->getObs()[a];
+			REAL(cells_qual)[i] = c->getQuality();
 			// Destroy cell now that we're done
 			delete c;
 		}
@@ -390,6 +433,9 @@ extern "C" {
 	
 		SET_VECTOR_ELT(ans, 1, cells_obs);
 		SET_STRING_ELT(names, 1, mkChar("cells.obs"));
+
+		SET_VECTOR_ELT(ans, 2, cells_qual);
+		SET_STRING_ELT(names, 2, mkChar("cells.quality"));
 
 		setAttrib(ans, R_NamesSymbol, names);
 		UNPROTECT(n_protected);
