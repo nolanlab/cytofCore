@@ -1,6 +1,8 @@
+useDynLib(cytofCore)
 export(
-    "cytofCore.read.conf",
     "cytofCore.read.imd",
+	"cytofCore.read.conf",
     "cytofCore.write.FCS",
-    "cytofCore.extract.cells"
+	"cytofCore.extract.R",
+    "cytofCore.extract.native"
 )

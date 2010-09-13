@@ -45,6 +45,8 @@ namespace {
 		bool    noise_subtraction;
 		size_t  min_noise_length;
 
+		bool    slope_filter;
+
 		size_t  num_pushes;
 		ssize_t blk_size;
 	};
@@ -213,7 +215,7 @@ namespace {
 			double slope1 = sm1 - sm0, slope2 = sm2 - sm1;
 			if (sign(slope2) != 0 && sign(slope1) != sign(slope2))
 				cross++;
-		}		
+		}
 		if (cross > 1)
 			cell->setQuality(0.);
 		return true;  // We don't block cells with multiple crossing, but do mark them as low quality
@@ -292,7 +294,7 @@ namespace {
 								// Cell filters
 								cell->setEnd(smoother.getPush());
 								if (!length_filter(cell, smoother, dueler, opt) ||
-									!slope_filter (cell, smoother, dueler, opt))
+									(opt.slope_filter && !slope_filter (cell, smoother, dueler, opt)))
 									delete cell;
 								else {
 									dueler.integratePushes(cell->getObs(), cell->getStart(), cell->getEnd());
@@ -367,6 +369,7 @@ extern "C" {
 		ARG("cell.max.length", max_cell_length, (size_t)*(INTEGER(arg)), 75);
 		ARG("noise.subtraction", noise_subtraction, *(LOGICAL(arg)), true);
 		ARG("noise.min.length", min_noise_length, (size_t)*(INTEGER(arg)), 30);
+		ARG("slope.filter", slope_filter, *(LOGICAL(arg)), false);
 		ARG("num.pushes", num_pushes, (size_t)*(INTEGER(arg)), std::numeric_limits<size_t>::max());
 
 	
