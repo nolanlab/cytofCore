@@ -2,6 +2,7 @@ cytofCore.read.conf <- function(file) {
     read.table(file,header=TRUE)
 }
 
+
 cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0, start_push=0, num_pushes=NULL) {
     if (!is.null(analytes)) {
 		num_analytes <- length(analytes)
@@ -17,6 +18,7 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
 
     if (is.character(file)) {
 		if (is.null(num_pushes) && !is.na(file.info(file)$size)) {
+			# File size should be multiple of 2 * # analytes * 2 bytes
 			num_pushes <- as.integer(file.info(file)$size / num_analytes / 4)
 		}
 		file <- file(file, "rb")
@@ -31,7 +33,8 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
     }
 
     # Read the IMD file in chunks
-    current_push <- 0
+    
+	current_push <- 0
 	if (start_push > 0) {
 		if (!isSeekable(file)) {
 			stop("Cannot seek in specified file or connection")
@@ -67,6 +70,7 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
 		colnames(l$pulse)     <- analytes
 		return(invisible(l))
     } else {
+		# If you supplied conf file, we assume you only want the dual counts
 		D <- c()
 		for (i in 1:num_analytes) {
 			d <- round(IP[,I_cols[i]]*conf$Slope[i]+conf$Intercept[i])

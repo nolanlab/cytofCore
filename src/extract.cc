@@ -51,12 +51,18 @@ namespace {
 		ssize_t blk_size;
 	};
 
+	/* Extract values from conf and IMD files */
 #define SLOPE(CONF, A, ANA) (CONF[(A)+ANA])
 #define INTERCEPT(CONF, A, ANA) (CONF[(A)])
 
 #define INTENSITY(PUSH, A) (PUSH[2*(A)])
 #define PULSE(PUSH, A) (PUSH[2*(A)+1])
 
+	/* 
+	 * Compute dual counts
+	 *
+	 * Stateful object for computing dual counts, push totals and integrating dual counts
+	 */
 	class Dueler {
 	public:
 		const double* Conf;
@@ -113,6 +119,9 @@ namespace {
 
 	};
 
+	/*
+	 * "Online" smoothing filter
+	 */
 	class Smoother {
 	public:
 		const double* Coeffs;
@@ -152,6 +161,10 @@ namespace {
 		int64_t getPush() const { return Push; }
 		void advPush() { ++BufPtr; ++Push; }
 
+		/*
+		 * Iterator for smoothed results. Note you cannot meaningfully iterate beyond
+		 * size of circular buffer.
+		 */
 		class Iterator {
 			double *Buf;
 			size_t Mask, P;
@@ -172,6 +185,9 @@ namespace {
 		ACell
 	};
 
+	/*
+	 * Generalized observation for noise and cells
+	 */
 	class Observation {
 	public:
 		static size_t Analytes;
@@ -278,8 +294,10 @@ namespace {
 									std::swap(noise_tmp, noise_act);
 								}	
 																
-							} else
+							} else {
+								// Default case, integrate push into "noise" observation
 								dueler.integratePushes(noise_tmp->getObs(), smoother.getPush(), smoother.getPush()+1);
+							}
 							break;
 						}
 						case ACell: {

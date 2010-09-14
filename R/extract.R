@@ -21,7 +21,7 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
     cells <- which(runs$value)
     
     found <- matrix(nrow=length(cells),ncol=length(cols)+3)
-    found[,1] <- (cumsum(runs$lengths))[cells-1] + 1 # Leading push
+    found[,1] <- (cumsum(runs$lengths))[cells-1] + 1 # Leading push (+1 b/c R is "1" indexed)
     found[,2] <- found[,1]/freq*1000
     found[,3] <- runs$lengths[cells]  # Cell length 
     for (i in 1:nrow(found)) {
@@ -48,7 +48,8 @@ cytofCore.extract.cells <- function(data, cols=NULL, thresh=10.0, sigma=3, num_s
 }
 
 cytofCore.filter.cells <- function(cells) {
-    fail <- c()
+    # Filter out cells with multiple peaks
+	fail <- c()
     for (i in 1:nrow(cells$cells)) {
 		beg <- cells$cells[i,1]
 		len <- cells$cells[i,3]
