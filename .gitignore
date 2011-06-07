@@ -3,3 +3,4 @@
 *.o
 config.log
 config.status
+a.out.dSYM

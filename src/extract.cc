@@ -401,13 +401,13 @@ extern "C" {
 		{
 			fh = open(file_name, O_RDONLY);
 			if (fh == -1)
-				error("Error %d: open failed on file %s\n",errno,file_name);
+				error("Error: open failed on file %s\n",file_name);
 		}
 
 		{  // Extract the optimal block size for reading from this storage device
 			struct stat stat_buf;
 			if (fstat(fh, &stat_buf) != 0)
-				error("Error %d: fstat failed on file %s\n",errno,file_name);
+				error("Error: fstat failed on file %s\n",file_name);
 			opt.blk_size = stat_buf.st_blksize;
 		}
 
