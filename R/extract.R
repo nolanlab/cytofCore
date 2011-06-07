@@ -90,7 +90,7 @@ cytofCore.extract.R <- function(imd, conf,
 
 cytofCore.extract.native <- function(imd, conf, 
 	pulse_thresh=3.0, num_pushes=.Machine$integer.max, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75, noise.subtraction=TRUE,
-	noise.min.length=30, slope.filter=FALSE, freq=77000) {
+	noise.min.length=30, slope.filter=TRUE, freq=77000) {
 
 	# Load and format "conf" values for compute dual counts
 	if (is.character(conf) && file.exists(conf)) {
