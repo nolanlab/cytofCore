@@ -71,7 +71,7 @@
 				<key>Class Name</key>
 				<string>SpecifiedFilesAction</string>
 				<key>Disabled</key>
-				<false/>
+				<true/>
 				<key>InputUUID</key>
 				<string>E9A7B547-5201-4E46-B5EB-8BE33B2C657F</string>
 				<key>Keywords</key>
@@ -108,14 +108,14 @@
 					</dict>
 				</dict>
 				<key>isViewVisible</key>
-				<true/>
+				<false/>
 				<key>location</key>
-				<string>620.000000:901.000000</string>
+				<string>620.000000:705.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Get Specified Finder Items.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
 			<key>isViewVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>action</key>
@@ -724,33 +724,33 @@ RSCRIPT
 	</array>
 	<key>connectors</key>
 	<dict>
-		<key>29E7DD49-F386-406C-A1A1-706556E2858E</key>
+		<key>600112D3-34D3-43E7-AA73-14A66E9157B1</key>
 		<dict>
 			<key>from</key>
 			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
 			<key>to</key>
 			<string>3CD32591-AACD-4493-9DDB-830DAF9DA47E - 3CD32591-AACD-4493-9DDB-830DAF9DA47E</string>
 		</dict>
-		<key>62AFD15A-6E1B-42B1-A3EC-F61B5865B83A</key>
-		<dict>
-			<key>from</key>
-			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
-			<key>to</key>
-			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
-		</dict>
-		<key>94A39489-243F-42DF-A529-86A30956ABA6</key>
+		<key>7F095043-8CF7-4030-857F-8F1BF0982625</key>
 		<dict>
 			<key>from</key>
 			<string>3CD32591-AACD-4493-9DDB-830DAF9DA47E - 3CD32591-AACD-4493-9DDB-830DAF9DA47E</string>
 			<key>to</key>
 			<string>51F52F42-C97B-4B3A-8DEC-5879154D2B70 - 51F52F42-C97B-4B3A-8DEC-5879154D2B70</string>
 		</dict>
-		<key>EF46B884-30B9-43E4-99DE-4E671BECB2A3</key>
+		<key>C2704ABE-55E9-4CCC-8793-2118FA2C50A9</key>
 		<dict>
 			<key>from</key>
 			<string>61E1656B-0856-49B3-AC0B-658A9094872E - 61E1656B-0856-49B3-AC0B-658A9094872E</string>
 			<key>to</key>
 			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
+		</dict>
+		<key>DEBA9DD5-C6A9-4ABA-956A-285C7B26433D</key>
+		<dict>
+			<key>from</key>
+			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
+			<key>to</key>
+			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
 		</dict>
 	</dict>
 	<key>workflowMetaData</key>
