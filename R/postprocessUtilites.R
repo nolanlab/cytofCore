@@ -56,11 +56,8 @@ cytofCore.combineChannels = function(flowFrame,channelList,newName=NULL){
   return(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=cbind(exprs(flowFrame), `colnames<-`(cbind(combinedValues), newName)),parameters=params,description=description(flowFrame))))
 }
 
-cytofCore.subtract = function(flowFrame,value=100,exclude=c("Time","Cell Length"),timeCol="Time"){
-	if (!(timeCol %in% colnames(flowFrame))){
-		stop(paste("Time Column",timeCol,"not found."));		
-	}
- 
+cytofCore.subtract = function(flowFrame,value=100,exclude=c("Time","Cell Length")){
+	
 	if (!all(exclude %in% colnames(flowFrame))){
 		offending = which(!(exclude %in% colnames(flowFrame)))
 		stop( paste("Channel(s)",paste(exclude[offending],collapse=","),"not found in frame.") )
@@ -71,8 +68,9 @@ cytofCore.subtract = function(flowFrame,value=100,exclude=c("Time","Cell Length"
   return(cytofCore.updateFlowFrameKeywords(flowFrame))
 }
 
-cytofCore.concatenateFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F){
+cytofCore.concatenateFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeCol="Time"){
 	currentwd = getwd();
+ 
 	if (is.null(outputDir)){
 		outputDir = inputDir;
 	}
@@ -83,6 +81,17 @@ cytofCore.concatenateFiles = function(inputDir,outputDir=NULL,pattern=NULL,overw
 		stop(paste("Output Directory",outputDir,"not found."))
 	}
  
+ 	setwd(inputDir);
+ 	if (is.null(pattern)){
+  	outputFileName="combined.fcs";
+  } else {
+  	outputFileName = paste(paste(pattern,collapse="-"),"_combined.fcs",sep="")	
+  }
+  
+  if (file.exists(outputFileName) && !overwrite){
+  	stop(paste("File ",outputFileName," already exists in dir ",outputDir,". Set overwrite argument to TRUE or remove file first.",sep=""))
+  }
+ 
 	fcsFiles = list.files(inputDir,pattern=".fcs",ignore.case=F)
   
   matched = c(1:length(fcsFiles));
@@ -90,25 +99,28 @@ cytofCore.concatenateFiles = function(inputDir,outputDir=NULL,pattern=NULL,overw
   	matched=intersect(matched,grep(match,fcsFiles))
   }
 	combineFiles = fcsFiles[matched]
-  
-  setwd(inputDir);
  
   begin=T
  	for (file in combineFiles){
  	  cat(paste("Adding",file,"\n"));
  		if (begin){
  			combinedData = exprs(read.FCS(file));
+			if (!(timeCol %in% colnames(combinedData))){
+				stop(paste("Time Column",timeCol,"not found for file",file));		
+			}
+		
 			begin=F
+		
  		} else {
 			tmpData = exprs(read.FCS(file));
+ 			if (!(timeCol %in% colnames(tmpData))){
+				stop(paste("Time Column",timeCol,"not found for file",file));		
+			}
 	 		tmpData[,timeCol] = tmpData[,timeCol]+(max(combinedData[,timeCol])+round((max(combinedData[,timeCol])-min(combinedData[,timeCol]))/nrow(combinedData)))
  			combinedData = rbind(combinedData,tmpData)
  		}
  	}
-  outputFileName = paste(paste(pattern,collapse="-"),"_combined.fcs",sep="")
-  if (file.exists(outputFileName) && !overwrite){
-  	stop(paste("File ",outputFileName," already exists in dir ",outputDir,". Set overwrite argument to TRUE or remove file first.",sep=""))
-  }
+  
  	write.FCS(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=combinedData)),outputFileName);
   rm(combinedData,tmpData);
   gc()

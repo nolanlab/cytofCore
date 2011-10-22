@@ -4,5 +4,8 @@ export(
 	"cytofCore.read.conf",
     "cytofCore.write.FCS",
 	"cytofCore.extract.R",
-    "cytofCore.extract.native"
+    "cytofCore.extract.native",
+    "cytofCore.combineChannels",
+    "cytofCore.subtract",
+    "cytofCore.concatenateFiles"    
 )
