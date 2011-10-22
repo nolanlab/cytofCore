@@ -56,19 +56,27 @@ cytofCore.combineChannels = function(flowFrame,channelList,newName=NULL){
   return(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=cbind(exprs(flowFrame), `colnames<-`(cbind(combinedValues), newName)),parameters=params,description=description(flowFrame))))
 }
 
-cytofCore.subtract = function(flowFrame,value=100,exclude=c("Time","Cell Length")){
+cytofCore.subtract = function(flowFrame,value=100,exclude=c(1,2)){
 	
-	if (!all(exclude %in% colnames(flowFrame))){
-		offending = which(!(exclude %in% colnames(flowFrame)))
-		stop( paste("Channel(s)",paste(exclude[offending],collapse=","),"not found in frame.") )
+	if (length(exclude)>0){
+		if (!is.numeric(exclude)){
+			if (!all(exclude %in% colnames(flowFrame))){
+				offending = which(!(exclude %in% colnames(flowFrame)))
+				stop( paste("Channel(s)",paste(exclude[offending],collapse=","),"not found in frame.") )
+			}
+		} else {
+			exclude = colnames(flowFrame)[exclude];
+		}	
 	}
+	
 	subtractCols = setdiff(colnames(flowFrame),exclude)
 	exprs(flowFrame)[,subtractCols] = exprs(flowFrame)[,subtractCols]-value
  
   return(cytofCore.updateFlowFrameKeywords(flowFrame))
 }
 
-cytofCore.concatenateFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeCol="Time"){
+
+cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeCol="Time"){
 	currentwd = getwd();
  
 	if (is.null(outputDir)){

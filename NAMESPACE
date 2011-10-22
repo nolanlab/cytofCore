@@ -6,6 +6,5 @@ export(
 	"cytofCore.extract.R",
     "cytofCore.extract.native",
     "cytofCore.combineChannels",
-    "cytofCore.subtract",
-    "cytofCore.concatenateFiles"    
+    "cytofCore.subtract"    
 )
