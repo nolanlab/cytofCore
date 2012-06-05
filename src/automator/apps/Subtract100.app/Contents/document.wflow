@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>AMApplicationBuild</key>
-	<string>330</string>
+	<string>339.2</string>
 	<key>AMApplicationVersion</key>
-	<string>2.2.1</string>
+	<string>2.2.4</string>
 	<key>AMDocumentVersion</key>
 	<string>2</string>
 	<key>actions</key>
@@ -52,8 +52,9 @@
 				<dict>
 					<key>fileNames</key>
 					<array>
-						<string>~/Desktop/notime/tmp/4070_a_cells_found.fcs_subtracted.fcs_EGF.fcs</string>
-						<string>~/Desktop/notime/tmp/4070_a_cells_found.fcs_subtracted.fcs_EPO.fcs</string>
+						<string>~/Desktop/notime/tc/CMP.fcs</string>
+						<string>~/Desktop/notime/tc/Erythroblast.fcs</string>
+						<string>~/Desktop/notime/tc/GMP.fcs</string>
 					</array>
 				</dict>
 				<key>BundleIdentifier</key>
@@ -71,7 +72,7 @@
 				<key>Class Name</key>
 				<string>SpecifiedFilesAction</string>
 				<key>Disabled</key>
-				<true/>
+				<false/>
 				<key>InputUUID</key>
 				<string>E9A7B547-5201-4E46-B5EB-8BE33B2C657F</string>
 				<key>Keywords</key>
@@ -108,14 +109,14 @@
 					</dict>
 				</dict>
 				<key>isViewVisible</key>
-				<false/>
+				<true/>
 				<key>location</key>
-				<string>620.000000:705.000000</string>
+				<string>619.500000:901.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Get Specified Finder Items.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
 			<key>isViewVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>action</key>
@@ -171,7 +172,11 @@
 					<key>displayWarning</key>
 					<false/>
 					<key>explanationText</key>
-					<string>Subtraction will run in background and a text file with output will appear when complete.</string>
+					<string>Drag an FCS file on to the Subtract100.app to subtract 100 from parameters. The first two columns are excluded by default.
+
+Subtraction will run in background and a text file with output will appear when complete.
+
+IMPORTANT: File names may not have spaces anywhere in their paths.</string>
 					<key>negativeTitle</key>
 					<string>Cancel</string>
 					<key>questionText</key>
@@ -280,7 +285,7 @@
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>620.000000:663.000000</string>
+				<string>619.500000:663.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Ask for Confirmation.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
@@ -468,7 +473,7 @@ RSCRIPT
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>620.000000:466.000000</string>
+				<string>619.500000:466.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
@@ -714,7 +719,7 @@ RSCRIPT
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>620.000000:217.000000</string>
+				<string>619.500000:217.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Ask for Confirmation.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
@@ -724,33 +729,33 @@ RSCRIPT
 	</array>
 	<key>connectors</key>
 	<dict>
-		<key>600112D3-34D3-43E7-AA73-14A66E9157B1</key>
+		<key>48E66245-84AA-41F8-8A41-AF316632FD46</key>
 		<dict>
 			<key>from</key>
 			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
 			<key>to</key>
 			<string>3CD32591-AACD-4493-9DDB-830DAF9DA47E - 3CD32591-AACD-4493-9DDB-830DAF9DA47E</string>
 		</dict>
-		<key>7F095043-8CF7-4030-857F-8F1BF0982625</key>
+		<key>8DFFD017-F1AF-4E13-AD40-0586D8DE5382</key>
 		<dict>
 			<key>from</key>
-			<string>3CD32591-AACD-4493-9DDB-830DAF9DA47E - 3CD32591-AACD-4493-9DDB-830DAF9DA47E</string>
+			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
 			<key>to</key>
-			<string>51F52F42-C97B-4B3A-8DEC-5879154D2B70 - 51F52F42-C97B-4B3A-8DEC-5879154D2B70</string>
+			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
 		</dict>
-		<key>C2704ABE-55E9-4CCC-8793-2118FA2C50A9</key>
+		<key>ED21FFB2-A333-48C9-B23F-80CE12E2A6BE</key>
 		<dict>
 			<key>from</key>
 			<string>61E1656B-0856-49B3-AC0B-658A9094872E - 61E1656B-0856-49B3-AC0B-658A9094872E</string>
 			<key>to</key>
 			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
 		</dict>
-		<key>DEBA9DD5-C6A9-4ABA-956A-285C7B26433D</key>
+		<key>F42CF6C2-5777-46EB-9BE4-47C4C3928CB9</key>
 		<dict>
 			<key>from</key>
-			<string>53AC3122-7423-461A-83F1-D9F619232F19 - 53AC3122-7423-461A-83F1-D9F619232F19</string>
+			<string>3CD32591-AACD-4493-9DDB-830DAF9DA47E - 3CD32591-AACD-4493-9DDB-830DAF9DA47E</string>
 			<key>to</key>
-			<string>9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C - 9DB6D5EC-732B-4423-A6D9-F2A0E2AFBC2C</string>
+			<string>51F52F42-C97B-4B3A-8DEC-5879154D2B70 - 51F52F42-C97B-4B3A-8DEC-5879154D2B70</string>
 		</dict>
 	</dict>
 	<key>workflowMetaData</key>

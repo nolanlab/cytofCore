@@ -135,3 +135,33 @@ cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=N
   setwd(currentwd);
   return(paste(outputDir,"->",outputFileName))
 }
+
+cytofCore.concatenateFiles = function(fcsFiles,timeCol="Time"){
+	begin=T
+	for (file in fcsFiles){
+		if (!file.exists(file)){
+			stop(paste(file,"Not Found! Stopping."))
+		}
+		cat(paste("Adding",file,"\n"));
+		if (begin){
+			combinedData = exprs(read.FCS(file));
+			if (!(timeCol %in% colnames(combinedData))){
+				stop(paste("Time Column",timeCol,"not found for file",file));		
+			}
+			begin=F
+		} else {
+			tmpData = exprs(read.FCS(file));
+			if (!all(colnames(tmpData)==colnames(combinedData))){
+				stop(paste("File names in files do not match.",colnames(tmpData),colnames(combinedData),sep="\n"))
+			}
+			if (!(timeCol %in% colnames(tmpData))){
+				stop(paste("Time Column",timeCol,"not found for file",file));		
+			}
+			tmpData[,timeCol] = tmpData[,timeCol]+(max(combinedData[,timeCol])+round((max(combinedData[,timeCol])-min(combinedData[,timeCol]))/nrow(combinedData)))
+			combinedData = rbind(combinedData,tmpData)
+		}
+	}
+	outputFileName = paste(dirname(fcsFiles[1]),"/concatenated_",gsub("\\s+","_",date()),".fcs",sep="")
+	write.FCS(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=combinedData)),outputFileName);
+	return(outputFileName)
+}

@@ -7,5 +7,7 @@ export(
     "cytofCore.extract.native",
     "cytofCore.combineChannels",
     "cytofCore.subtract",
-    "cytofCore.write.IMD.stream"
+    "cytofCore.write.IMD.stream",
+    "cytofCore.concatenateFiles",
+    "cytofCore.updateFlowFrameKeywords"
 )
