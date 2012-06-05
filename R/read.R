@@ -41,7 +41,7 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
 		}
 		# Each analyte consumes 4 bytes, 2 each for intensity and pulse values
 		seek(file, where=start_push*num_analytes*4, origin="current")
-    }
+  }
       
 	while (is.null(num_pushes) || current_push < num_pushes) { 
 		desired_n <- ifelse(is.null(num_pushes), 2^16, num_pushes-current_push) * num_analytes * 2
@@ -58,7 +58,7 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
             break;
 		}
 		current_push <- as.integer(length(N) / num_analytes / 2)
-    }
+  }
   
     I_cols <- seq(from=1, by=2, length.out=num_analytes)
     P_cols <- seq(from=2, by=2, length.out=num_analytes)  
