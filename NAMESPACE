@@ -1,10 +1,11 @@
 useDynLib(cytofCore)
 export(
     "cytofCore.read.imd",
-	"cytofCore.read.conf",
+    "cytofCore.read.conf",
     "cytofCore.write.FCS",
-	"cytofCore.extract.R",
+    "cytofCore.extract.R",
     "cytofCore.extract.native",
     "cytofCore.combineChannels",
-    "cytofCore.subtract"    
+    "cytofCore.subtract",
+    "cytofCore.write.IMD.stream"
 )
