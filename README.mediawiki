@@ -5,7 +5,9 @@
  R CMD INSTALL cytofCore_0.02.tar.gz
 
 ===Using Automator Applets===
-Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' Currently applets include
+Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
+
+Currently applets include:
 ;Subtract100.app
 : Subtracts 100 from all FCS file columns except the first two.
 ;ExtractIMD.app
