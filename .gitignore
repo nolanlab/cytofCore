@@ -4,3 +4,4 @@
 config.log
 config.status
 a.out.dSYM
+.DS_Store
