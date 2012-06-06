@@ -1,10 +1,10 @@
-== CyTOFCore README 0.02 ==
-====Installation====
+= CyTOFCore README 0.02 =
+==Installation==
 # Download source package from the https://github.com/nolanlab/cytofCore/downloads
 # Install source:
  R CMD INSTALL cytofCore_0.02.tar.gz
 
-====Using Automator Applets====
+==Using Automator Applets==
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. These should work in Mac OS X 10.6 or later. Currently these include
 ;Subtract100.app
 : Subtracts 100 from all FCS file columns except the first two.
@@ -18,10 +18,10 @@ Several automator applets have been included that enable drag-and-drop functiona
 Automator Applets are found in:
  cytofCore/src/automator/apps/
 
-=====Automator Applet Notes=====
+==Automator Applet Notes==
 ; Subtract100.app
-: *You can drag multiple files on the applet and it will subtract 100 from all files.
+: You can drag multiple files on the applet and it will subtract 100 from all files.
 ; ExtractIMD.app
-: *Extraction of full IMD files takes a significant amount of time and space. It is likely better to extract relevant portions of the IMD by supplying specific start and end times for extraction. Time limits are in ''milliseconds.'' 
+: Extraction of full IMD files takes a significant amount of time and space. It is likely better to extract relevant portions of the IMD by supplying specific start and end times for extraction. Time limits are in ''milliseconds.'' 
 ; Concatenate.app
-: *All FCS files must have identical parameters names and orders.
+: All FCS files must have identical parameters names and orders.
