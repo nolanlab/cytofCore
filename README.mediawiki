@@ -5,9 +5,9 @@
  R CMD INSTALL cytofCore_0.02.tar.gz
 
 ====Using Automator Applets====
-Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. Currently these include
+Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. These should work in Mac OS X 10.6 or later. Currently these include
 ;Subtract100.app
-: Subtracts 100 from all FCS file columns except the first two. Supports multiple file drag-and-drop.
+: Subtracts 100 from all FCS file columns except the first two.
 ;ExtractIMD.app
 : Converts binary IMD files to text.
 ;Concatenate.app
@@ -15,4 +15,13 @@ Several automator applets have been included that enable drag-and-drop functiona
 
 '''NOTE:''' Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.
 
+Automator Applets are found in:
+ cytofCore/src/automator/apps/
 
+=====Automator Applet Notes=====
+; Subtract100.app
+: *You can drag multiple files on the applet and it will subtract 100 from all files.
+; ExtractIMD.app
+: *Extraction of full IMD files takes a significant amount of time and space. It is likely better to extract relevant portions of the IMD by supplying specific start and end times for extraction. Time limits are in ''milliseconds.'' 
+; Concatenate.app
+: *All FCS files must have identical parameters names and orders.
