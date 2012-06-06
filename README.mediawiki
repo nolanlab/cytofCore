@@ -1,5 +1,18 @@
-== CyTOFCore Readme 0.02 ==
+== CyTOFCore README 0.02 ==
 ====Installation====
 # Download source package from the https://github.com/nolanlab/cytofCore/downloads
 # Install source:
  R CMD INSTALL cytofCore_0.02.tar.gz
+
+====Using Automator Applets====
+Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. Currently these include
+;Subtract100.app
+: Subtracts 100 from all FCS file columns except the first two. Supports multiple file drag-and-drop.
+;ExtractIMD.app
+: Converts binary IMD files to text.
+;Concatenate.app
+: Concatenates multiple FCS files into a single file.
+
+'''NOTE:''' Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.
+
+
