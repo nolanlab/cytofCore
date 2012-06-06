@@ -1,4 +1,4 @@
-===CyTOFCore README 0.02===
+==CyTOFCore README 0.02==
 ===Installation===
 # Download source package from the https://github.com/nolanlab/cytofCore/downloads
 # Install source:
