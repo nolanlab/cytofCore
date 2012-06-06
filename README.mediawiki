@@ -26,5 +26,5 @@ Automator Applets are found in:
 : Drag an IMD file and corresponding .conf file onto ExtractIMD.app to convert IMD to text.
 : Extraction of full IMD files takes a significant amount of time and space. It is likely better to extract relevant portions of the IMD by supplying specific start and end times for extraction. Time limits are in ''milliseconds.'' 
 ; Concatenate.app
-: Drag multiple FCS files onto Concatenate.app to combine them.
-: All FCS files must have identical parameters names and orders.
+* Drag multiple FCS files onto Concatenate.app to combine them.
+* All FCS files must have identical parameters names and orders.
