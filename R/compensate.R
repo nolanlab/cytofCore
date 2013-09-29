@@ -9,7 +9,7 @@ cytofCore.applyFileCompensation = function(inputFCSFile,inputCompFile,outputFile
   write.FCS(compedFrame,filename=outputFile)
 }
 
-cytofCore.compensateDirectory = function(inputFCSDirectory,inputCompDirectory,outputDirectory,fcsFiles,compFiles){
+cytofCore.batchFileCompensate = function(inputFCSDirectory,inputCompDirectory,outputDirectory,fcsFiles,compFiles){
   if ((length(compFiles)=!1)||(length(compFiles)!=length(fcsFiles))){
     stop("Must provide a single comp file or a comp file for each fcs file.")
   }

@@ -9,5 +9,7 @@ export(
     "cytofCore.subtract",
     "cytofCore.write.IMD.stream",
     "cytofCore.concatenateFiles",
-    "cytofCore.updateFlowFrameKeywords"
+    "cytofCore.updateFlowFrameKeywords",
+    "cytofCore.applyFileCompensation",
+    "cytofCore.batchFileCompensate"
 )
