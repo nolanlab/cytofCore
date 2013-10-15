@@ -88,38 +88,5 @@ cytofCore.extract.R <- function(imd, conf,
 	list(cells.found=cell$cells,quality=quality)
 }
 
-cytofCore.extract.native <- function(imd, conf, 
-	pulse_thresh=3.0, num_pushes=.Machine$integer.max, thresh=10.0, sigma=3, num_sigma=3, min_length=10, max_length=75, noise.subtraction=TRUE,
-	noise.min.length=30, slope.filter=TRUE, freq=77000) {
-
-	# Load and format "conf" values for compute dual counts
-	if (is.character(conf) && file.exists(conf)) {
-		conf <- cytofCore.read.conf(conf)
-	}
-	toDual <- as.matrix(conf[,c("Intercept","Slope")])
-	storage.mode(toDual) <- "double"
-
-	# Generate smoothing filter
-	smooth <-  dnorm((-num_sigma*sigma):(num_sigma*sigma),sd=sigma)
-
-	# Extract cells
-	r <- .Call(
-			"CC_extract", 
-			imd, toDual, 
-			list(
-			smooth=smooth, pulse.threshold=pulse_thresh, cell.threshold=thresh, 
-			cell.min.length=as.integer(min_length), cell.max.length=as.integer(max_length),
-			noise.subtraction=noise.subtraction, noise.min.length=as.integer(noise.min.length),
-			slope.filter=slope.filter,
-			num.pushes=as.integer(num_pushes)
-			))
-	r$cells.extent <- cbind(r$cells.extent[,1], r$cells.extent[,1]/freq*1000, r$cells.extent[,2]) 
-
-	# Build return data structure to mimic output from CyToF software
-	analytes <- paste(round(conf$Mass),conf$Symbol,sep="")
-	colnames(r$cells.obs) <- analytes
-	colnames(r$cells.extent) <- c("Leading_Push","Time","Cell_length")
-	list(cells.found=cbind(r$cells.extent,r$cells.obs),quality=r$cells.quality)
-}
 
 
