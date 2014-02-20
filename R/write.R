@@ -17,8 +17,8 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
           }
 		    }
 		    
-		    c_min <- min(0,min(x[,c]))  # Hack to prevent flowCore from shifting range
-		    c_max <- max(x[,c])
+		    c_min <- floor(min(0,min(x[,c])))  # Hack to prevent flowCore from shifting range
+		    c_max <- ceiling(max(x[,c]))
 		    c_rng <- c_max - c_min + 1
 
 		    pl <- matrix(c(c_name, c_desc, c_rng, c_min, c_max),nrow=1)
