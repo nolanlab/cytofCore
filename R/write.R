@@ -1,4 +1,4 @@
-cytofCore.write.FCS <- function(x, filename, what="numeric") {
+cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=NULL) {
     if (is.matrix(x)) {
 		# Don't write "Leading_Push" to FCS files		
 		x <- x[,which(colnames(x) != "Leading_Push")]
@@ -10,6 +10,11 @@ cytofCore.write.FCS <- function(x, filename, what="numeric") {
 		dl[["$DATATYPE"]] <- "F"
 		for (c in 1:ncol(x)) {
 		    c_name <- colnames(x)[c]
+		    if (!is.null(channelDescriptions)){
+          if (!is.na(channelDescriptions[c])){
+            c_name <- channelDescriptions[c]  
+          }
+		    }
 		    
 		    c_min <- min(0,min(x[,c]))  # Hack to prevent flowCore from shifting range
 		    c_max <- max(x[,c])
