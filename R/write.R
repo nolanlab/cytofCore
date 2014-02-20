@@ -10,9 +10,10 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
 		dl[["$DATATYPE"]] <- "F"
 		for (c in 1:ncol(x)) {
 		    c_name <- colnames(x)[c]
+        c_desc <- colnames(x)[c]
 		    if (!is.null(channelDescriptions)){
           if (!is.na(channelDescriptions[c])){
-            c_name <- channelDescriptions[c]  
+            c_desc <- channelDescriptions[c]  
           }
 		    }
 		    
@@ -20,7 +21,7 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
 		    c_max <- max(x[,c])
 		    c_rng <- c_max - c_min + 1
 
-		    pl <- matrix(c(c_name, c_name, c_rng, c_min, c_max),nrow=1)
+		    pl <- matrix(c(c_name, c_desc, c_rng, c_min, c_max),nrow=1)
 		    colnames(pl) <- c("name", "desc", "range", "minRange", "maxRange")
 		    rownames(pl) <- paste("$P",c,sep="") 
 		    pd <- rbind(pd, pl)
@@ -29,7 +30,7 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
 		    dl[[paste("$P",c,"R",sep="")]] <- toString(c_rng); # Range
 		    dl[[paste("$P",c,"E",sep="")]] <- "0,0";	    # Exponent
 		    dl[[paste("$P",c,"N",sep="")]] <- c_name;	    # Name
-		    dl[[paste("$P",c,"S",sep="")]] <- c_name;	    # Desc	
+		    dl[[paste("$P",c,"S",sep="")]] <- c_desc;	    # Desc	
 		}	
    
 		x <- flowFrame(x, as(data.frame(pd), "AnnotatedDataFrame"), description=dl) 
