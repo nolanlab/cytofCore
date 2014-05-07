@@ -165,3 +165,81 @@ cytofCore.concatenateFiles = function(fcsFiles,timeCol="Time"){
 	write.FCS(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=combinedData)),outputFileName);
 	return(outputFileName)
 }
+
+cytofCore.updatePanel = function(){
+  #select template file, which has list of metals you want to include and their corresponding marker names
+  Filters <- matrix(c("template", ".txt","template", ".TXT", "template",".fcs","template",".FCS","template",".csv","template","CSV"), 6, 2, byrow = TRUE)
+  templateFile<- tk_choose.files(caption="Select template file", multi=FALSE, filters=Filters)
+  templateExt=file_ext(templateFile)
+  
+  #read in metal and marker list from template file
+  if (templateExt=="csv" || templateExt=="CSV") {
+    data =read.csv(templateFile, header=FALSE)
+    channels=as.character(data[,1])
+    markers=as.character(data[,2])
+  } else if (templateExt=="txt" || templateExt=="TXT") {
+    data=read.table(templateFile, header=FALSE)
+    channels=as.character(data[,1])
+    markers=as.character(data[,2])
+  } else if (templateExt=="fcs" || templateExt=="FSC") {
+    data=read.FCS(templateFile)
+    channels=colnames(data)
+    markers=as.character(parameters(data)$desc)
+  }
+  
+  #for simplicity, copy over the channel values when the markers are empty
+  for (i in 1:length(markers)) {
+    if ((nchar(markers[i]) == 0) || is.na(markers[i])) {
+      markers[i]=channels[i]
+    }
+  }
+  
+  #select folder of FCS files to relabel
+  fcsFolder<-tk_choose.dir()
+  newFolder<-paste(fcsFolder,"/relabeled",sep="")
+  dir.create(newFolder)
+  fcsFiles<-list.files(path=fcsFolder, pattern=".fcs$")
+  
+  addZeroCol<-matrix(0,ncol=length(channels))
+  for (file in fcsFiles) {
+    oldFile=read.FCS(file.path(fcsFolder,file))
+    oldChannels=colnames(oldFile)
+    oldData=exprs(oldFile)
+    newData=matrix(data=0,nrow=nrow(oldData),ncol=length(channels))
+    
+    keepCols=matrix(TRUE,ncol=length(channels))
+    for (i in 1:length(channels)) {
+      ind=grep(paste("\\Q",channels[i],"\\E",sep=""),oldChannels)
+      if (length(ind)==1) {
+        newData[,i]=oldData[,ind]
+      } else if (addZeroCol[i]==0) {
+        print(paste("Channel", channels[i], "was not found in",file,"!")) 
+        yn=readline("Do you want to create a column of zeros in its place? y/n: ") 
+        
+        allone=readline("Do you want to apply this to all FCS files in this folder? y/n: ")
+        
+        if (yn=="y" && allone=="y") {
+          addZeroCol[i]=1
+        } else if (yn=="n" && allone=="y") {
+          addZeroCol[i]=-1
+          keepCols[i]=FALSE
+        } else if (yn=="n") {#skip this column but only in this file
+          keepCols[i]=FALSE
+        }       
+      } else if (addZeroCol[i]==-1) {
+        keepCols[i]=FALSE
+      }
+      
+    }
+    
+    newData=newData[,keepCols]
+    newChannels=channels[keepCols]
+    newMarkers=markers[keepCols]
+    
+    colnames(newData) = newChannels
+    
+    print(paste("Writing",file))
+    cytofCore.write.FCS(newData,file.path(newFolder,file),channelDescriptions=newMarkers)
+  }
+  
+}
