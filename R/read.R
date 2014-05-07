@@ -2,7 +2,7 @@ cytofCore.read.conf <- function(file) {
     read.table(file,header=TRUE)
 }
 
-
+# FIX
 cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0, start_push=0, num_pushes=NULL) {
     if (!is.null(analytes)) {
 		num_analytes <- length(analytes)
