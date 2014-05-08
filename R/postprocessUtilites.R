@@ -168,7 +168,7 @@ cytofCore.updatePanel = function(){
   #select template file, which has list of metals you want to include and their corresponding marker names
   Filters <- matrix(c("template", ".txt","template", ".TXT", "template",".fcs","template",".FCS","template",".csv","template","CSV"), 6, 2, byrow = TRUE)
   templateFile<- tk_choose.files(caption="Select template file", multi=FALSE, filters=Filters)
-  templateExt=file_ext(templateFile)
+  templateExt=substr(templateFile,nchar(templateFile)-3,nchar(templateFile))
   
   #read in metal and marker list from template file
   if (templateExt=="csv" || templateExt=="CSV") {
