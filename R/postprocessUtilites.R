@@ -28,7 +28,6 @@ cytofCore.updateFlowFrameKeywords = function(flowFrame){
 	return(flowFrame)
 }
 
-
 cytofCore.combineChannels = function(flowFrame,channelList,newName=NULL){
 	if (!all(channelList %in% colnames(flowFrame))){
 		offending = which(!(channelList %in% colnames(flowFrame)))
@@ -74,7 +73,6 @@ cytofCore.subtract = function(flowFrame,value=100,exclude=c(1,2)){
  
   return(cytofCore.updateFlowFrameKeywords(flowFrame))
 }
-
 
 cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeCol="Time"){
 	currentwd = getwd();
@@ -181,11 +179,12 @@ cytofCore.updatePanel = function(){
     data=read.table(templateFile, header=FALSE)
     channels=as.character(data[,1])
     markers=as.character(data[,2])
-  } else if (templateExt=="fcs" || templateExt=="FSC") {
+  } else if (templateExt=="fcs" || templateExt=="FCS") {
     data=read.FCS(templateFile)
-    channels=colnames(data)
+    channels=as.character(parameters(data)$name)
     markers=as.character(parameters(data)$desc)
   }
+  
   
   #for simplicity, copy over the channel values when the markers are empty
   for (i in 1:length(markers)) {
@@ -203,7 +202,7 @@ cytofCore.updatePanel = function(){
   addZeroCol<-matrix(0,ncol=length(channels))
   for (file in fcsFiles) {
     oldFile=read.FCS(file.path(fcsFolder,file))
-    oldChannels=colnames(oldFile)
+    oldChannels=as.character(parameters(oldFile)$name)
     oldData=exprs(oldFile)
     newData=matrix(data=0,nrow=nrow(oldData),ncol=length(channels))
     

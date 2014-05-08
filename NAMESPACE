@@ -8,5 +8,6 @@ export(
     "cytofCore.concatenateFiles",
     "cytofCore.updateFlowFrameKeywords",
     "cytofCore.applyFileCompensation",
-    "cytofCore.batchFileCompensate"
+    "cytofCore.batchFileCompensate",
+    "cytofCore.updatePanel"
 )
