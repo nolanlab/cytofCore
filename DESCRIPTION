@@ -4,6 +4,7 @@ Version: 0.1
 Author: R. Bruggner, M. Linderman
 Description: Provides tools for working with CyToF Mass Cytometer Data
 Maintainer: R. Bruggner <bruggner@stanford.edu>
-Depends: R (>= 2.8.1), flowCore, tcltk
+Depends: R (>= 2.8.1), flowCore
+Suggests: tcltk
 Imports: flowCore
 License: GPL-2
