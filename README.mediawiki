@@ -1,11 +1,13 @@
-==CyTOFCore README 0.02==
+==CyTOFCore README 0.3==
 ===Installation===
-# Download source package from the https://github.com/nolanlab/cytofCore/downloads
-# Install source:
- R CMD INSTALL cytofCore_0.02.tar.gz
+The cytofCore package can be installed directly from github using the devtools package. Start R and run the following commands:
+ R>install.packages("devtools")
+ R>library("devtools")
+Now install the cytofCore package
+ R>install_github("cytofCore","nolanlab")
 
 ===Using Automator Applets===
-Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
+Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
 
 Currently applets include:
 ;Subtract100.app
