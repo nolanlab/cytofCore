@@ -165,10 +165,10 @@ cytofCore.concatenateFiles = function(fcsFiles,timeCol="Time"){
 }
 
 cytofCore.updatePanel = function(){
-  #select template file, which has list of metals you want to include and their corresponding marker names
+  #select template file, which has list of metals you want to include and their desired marker names
   Filters <- matrix(c("template", ".txt","template", ".TXT", "template",".fcs","template",".FCS","template",".csv","template","CSV"), 6, 2, byrow = TRUE)
   templateFile<- tk_choose.files(caption="Select template file", multi=FALSE, filters=Filters)
-  templateExt=substr(templateFile,nchar(templateFile)-3,nchar(templateFile))
+  templateExt=substr(templateFile,nchar(templateFile)-2,nchar(templateFile))
   
   #read in metal and marker list from template file
   if (templateExt=="csv" || templateExt=="CSV") {
@@ -199,33 +199,33 @@ cytofCore.updatePanel = function(){
   dir.create(newFolder)
   fcsFiles<-list.files(path=fcsFolder, pattern=".fcs$")
   
-  addZeroCol<-matrix(0,ncol=length(channels))
+  addZeroCol<-matrix(0,ncol=length(channels))  #keep track of whether to add missing column for all files
   for (file in fcsFiles) {
     oldFile=read.FCS(file.path(fcsFolder,file))
     oldChannels=as.character(parameters(oldFile)$name)
     oldData=exprs(oldFile)
     newData=matrix(data=0,nrow=nrow(oldData),ncol=length(channels))
     
-    keepCols=matrix(TRUE,ncol=length(channels))
+    keepCols=matrix(TRUE,ncol=length(channels)) #keep track of columns to include in final matrix
     for (i in 1:length(channels)) {
       ind=grep(paste("\\Q",channels[i],"\\E",sep=""),oldChannels)
-      if (length(ind)==1) {
+      if (length(ind)==1) { #found this template metal in this fcs file
         newData[,i]=oldData[,ind]
-      } else if (addZeroCol[i]==0) {
+      } else if (addZeroCol[i]==0) { #haven't decided yet whether to create dummy column
         print(paste("Channel", channels[i], "was not found in",file,"!")) 
         yn=readline("Do you want to create a column of zeros in its place? y/n: ") 
         
         allone=readline("Do you want to apply this to all FCS files in this folder? y/n: ")
         
-        if (yn=="y" && allone=="y") {
+        if (yn=="y" && allone=="y") { #create dummy column in this and all files
           addZeroCol[i]=1
-        } else if (yn=="n" && allone=="y") {
+        } else if (yn=="n" && allone=="y") { #don't create dummy column in any file
           addZeroCol[i]=-1
           keepCols[i]=FALSE
-        } else if (yn=="n") {#skip this column but only in this file
+        } else if (yn=="n") {#don't create dummy column but only in this file
           keepCols[i]=FALSE
         }       
-      } else if (addZeroCol[i]==-1) {
+      } else if (addZeroCol[i]==-1) { #previously decided not to create this dummy column
         keepCols[i]=FALSE
       }
       
