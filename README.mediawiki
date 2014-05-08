@@ -1,4 +1,4 @@
-==CyTOFCore README 0.03==
+==CyTOFCore README 0.3==
 ===Installation===
 The cytofCore package can be installed directly from github using the devtools package. Start R and run the following commands:
  R>install.packages("devtools")
