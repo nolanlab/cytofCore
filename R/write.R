@@ -1,4 +1,4 @@
-cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=NULL) {
+cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=NULL,referenceDescription=NULL) {
     if (is.matrix(x)) {
 		# Don't write "Leading_Push" to FCS files		
 		x <- x[,which(colnames(x) != "Leading_Push")]
@@ -8,6 +8,25 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
 		dl <- list()  # 'description' list
 		
 		dl[["$DATATYPE"]] <- "F"
+    
+    if (!is.null(referenceDescription)) {
+      if (!is.null(referenceDescription[["$DATE"]])){
+        dl[["$DATE"]] <- referenceDescription[["$DATE"]]
+      }
+      if (!is.null(referenceDescription[["$BTIM"]])){
+        dl[["$BTIM"]] <- referenceDescription[["$BTIM"]]
+      }
+      if (!is.null(referenceDescription[["$ETIM"]])){
+        dl[["$ETIM"]] <- referenceDescription[["$ETIM"]]
+      }
+      if (!is.null(referenceDescription[["$CYT"]])){
+        dl[["$CYT"]] <- referenceDescription[["$CYT"]]
+      }
+      if (!is.null(referenceDescription[["$CYTSN"]])){
+        dl[["$CYTSN"]] <- referenceDescription[["$CYTSN"]]
+      }
+    }
+    
 		for (c in 1:ncol(x)) {
 		    c_name <- colnames(x)[c]
         c_desc <- colnames(x)[c]

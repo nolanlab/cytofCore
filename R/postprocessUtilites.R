@@ -238,7 +238,7 @@ cytofCore.updatePanel = function(){
     colnames(newData) = newChannels
     
     print(paste("Writing",file))
-    cytofCore.write.FCS(newData,file.path(newFolder,file),channelDescriptions=newMarkers)
+    cytofCore.write.FCS(newData,file.path(newFolder,file),channelDescriptions=newMarkers,referenceDescription=description(oldFile))
   }
   
 }
