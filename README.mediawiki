@@ -9,8 +9,11 @@ Now install the cytofCore package
 ===Editing the Panel of a set of FCS Files===
 The cytofCore.updatePanel function can be used to edit the panel written into the header of a set of FCS files. Typical edits include making spelling consistent (e.g., HLADR vs. HLA-DR), removing entire columns, re-ordering columns, etc. To use the panel editor, you must first prepare a template file with the desired panel. It can take one of two forms:
 
-* FCS Template: You may use an existing FCS file that has the correct panel as your template. 
-* Spreadsheet Template: You may write your desired panel into a spreadsheet. The first column should be a list of the channel names, and the second column should be the marker you want to write into those channels. You must save your spreadsheet as a CSV or tab-delimited TXT file. Below is an example spreadsheet that would create FCS files with only four parameters {| class="wikitable"
+*FCS Template: You may use an existing FCS file that has the correct panel as your template. 
+
+*Spreadsheet Template: You may write your desired panel into a spreadsheet. The first column should be a list of the channel names, and the second column should be the marker you want to write into those channels. You must save your spreadsheet as a CSV or tab-delimited TXT file. Below is an example spreadsheet that would create FCS files with only four parameters 
+
+{| class="wikitable" style="margin: auto;"
 |-
 | Time 
 | Time
@@ -33,6 +36,7 @@ To use the panel editor, you must load the cytofCore library, and then call the 
 
  R>library("cytofCore")
  R>cytofCore.updatePanel()
+
 
 ===Using Automator Applets===
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
