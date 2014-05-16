@@ -6,6 +6,35 @@ The cytofCore package can be installed directly from github using the devtools p
 Now install the cytofCore package
  R>install_github("cytofCore","nolanlab")
 
+===Editing the Panel of a set of FCS Files===
+The cytofCore.updatePanel function can be used to edit the panel written into the header of a set of FCS files. Typical edits include making spelling consistent (e.g., HLADR vs. HLA-DR), removing entire columns, re-ordering columns, etc. To use the panel editor, you must first prepare a template file with the desired panel. It can take one of two forms:
+
+* FCS Template: You may use an existing FCS file that has the correct panel as your template. 
+* Spreadsheet Template: You may write your desired panel into a spreadsheet. The first column should be a list of the channel names, and the second column should be the marker you want to write into those channels. You must save your spreadsheet as a CSV or tab-delimited TXT file. Below is an example spreadsheet that would create FCS files with only four parameters (Time, Cell_length, DNA1 and DNA2):
+{| class="wikitable"
+|-
+| Time 
+| Time
+|-
+| Cell_length
+| Cell_length
+|-
+| (Ir191)Di
+| DNA1
+|-
+| (Ir193)Di
+| DNA2
+|}
+
+You must put all the FCS files whose panels you want to update to the template's panel into a single folder. You will be asked to choose the template file, and then the folder of FCS files. When choosing the folder, you must actually enter into that folder in the selection window before clicking OK.
+
+In every FCS file in the selected folder, the panel updater will search for each metal listed in the template, and then will write that metal's marker as it is written in the template. It will put the list of metals/markers in the same order in each file. If a metal is not found, it will ask whether you want to include a placeholder column of zeros, or if you want to omit that channel from that file. A subfolder called 'relabeled' will be created within the selected folder, and new FCS files will be written there.
+
+To use the panel editor, you must load the cytofCore library, and then call the cytofCore.updatePanel function:
+
+ R>library("cytofCore")
+ R>cytofCore.updatePanel()
+
 ===Using Automator Applets===
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
 
