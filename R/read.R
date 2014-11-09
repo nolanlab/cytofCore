@@ -2,8 +2,68 @@ cytofCore.read.conf <- function(file) {
     read.table(file,header=TRUE)
 }
 
+cytofCore.read.imd.xml <- function(file) {
+  # extract xml from tail of imd
+  imd <- file(file, "rb")
+  on.exit(close(imd))
+  if (!isSeekable(imd)) {
+    stop("Cannot seek in specified file or connection")
+  }
+  
+  endTag="</ExperimentSchema>"
+  seek(imd,where=-2*nchar(endTag),origin="end")
+  fileEndString=paste(readBin(imd, what="character", size=2, n=2*nchar(endTag), signed=FALSE),collapse="")
+  
+  if (fileEndString != endTag) {
+    stop("The xml tail is either missing or irregular.")
+  }
+  
+  #read in chunks until the beginning of the xml is reached
+  chunkLength=1024
+  seek(imd,where=-2*chunkLength,origin="current")
+  xmlChunk=c()
+  while (!(0 %in% xmlChunk)) {
+    xmlChunk=c(readBin(imd, what="integer", size=2, n=chunkLength, signed=FALSE),xmlChunk)
+    seek(imd,where=-4*chunkLength,origin="current")
+  }
+  
+  # convert to char and trim extra before the xml
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[which(xmlChunk!=0)])))
+  
+  # parse xml
+  xmlList=xmlToList(xmlInternalTreeParse(imdString))
+  
+  # analyte info
+  analyteList=xmlList[names(xmlList)=="AcquisitionMarkers"]
+  analytes=c()
+  for (metal in analyteList) {
+    analytes=rbind(analytes,c(metal$Mass,metal$Description,metal$MassSymbol ))
+  }
+  analytes[,3]= paste(analytes[,3],as.character(round(as.numeric(analytes[,1]))),sep="")
+  
+  colnames(analytes)=c("mass","description","channel")
+  
+  # dual calibration info
+  dualList=xmlList[names(xmlList)=="DualAnalytesSnapshot"]
+  dualCalibration=c()
+  for (metal in dualList) {
+    dualCalibration=rbind(dualCalibration,as.numeric(c(metal$Mass,metal$DualSlope, metal$DualIntercept)))
+  }
+  colnames(dualCalibration)=c("mass","slope","intercept")
+  
+  imd.xml=list()
+  imd.xml$analytes=analytes
+  imd.xml$dualCalibration=dualCalibration
+  
+  return(imd.xml)
+  
+}
 
 cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0, start_push=0, num_pushes=NULL) {
+    
+    
+    
+    # change to allow input analytes for when imd is missing tail
     if (!is.null(analytes)) {
 		num_analytes <- length(analytes)
     } else if (!is.null(conf)) {
@@ -13,6 +73,7 @@ cytofCore.read.imd <- function(file, analytes=NULL, conf=NULL, pulse_thresh=3.0,
 		num_analytes <- nrow(conf)
 		analytes <- paste(round(conf$Mass),conf$Symbol,sep="")
     } else {
+      # Change this to read xml from tail of IMD file.
 		stop("One of analytes or conf must be specified to know how many analytes are present")
     }
 
