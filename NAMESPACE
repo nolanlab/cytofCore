@@ -1,5 +1,6 @@
 export(
     "cytofCore.read.imd",
+    "cytofCore.read.imd.xml",
     "cytofCore.read.conf",
     "cytofCore.write.FCS",
     "cytofCore.extract.R",
