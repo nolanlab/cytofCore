@@ -2,6 +2,7 @@ export(
     "cytofCore.read.imd",
     "cytofCore.read.imd.xml",
     "cytofCore.read.conf",
+    "cytofCore.read.rd8",
     "cytofCore.write.FCS",
     "cytofCore.extract.R",
     "cytofCore.combineChannels",

@@ -106,8 +106,7 @@ cytofCore.read.imd <- function(file, conf=NULL, pulse_thresh=1.0, start_push=0, 
     }
     # Each analyte consumes 4 bytes, 2 each for intensity and pulse values
     seek(file, where=start_push*num_analytes*4, origin="current")
-  }
-  
+  } 
   
 #   while (is.null(num_pushes) || current_push < num_pushes) { 
 #     desired_n <- ifelse(is.null(num_pushes), 2^16, num_pushes-current_push) * num_analytes * 2
@@ -126,6 +125,7 @@ cytofCore.read.imd <- function(file, conf=NULL, pulse_thresh=1.0, start_push=0, 
 #     current_push <- as.integer(length(N) / num_analytes / 2)
 #   }
 
+  #simplifying: just read in num_pushes number of pushes
   N=readBin(file,integer(),size=2,n=num_pushes*2*num_analytes,signed=F)
   
   I_cols <- seq(from=1, by=2, length.out=num_analytes)
@@ -148,4 +148,50 @@ cytofCore.read.imd <- function(file, conf=NULL, pulse_thresh=1.0, start_push=0, 
   colnames(l$pulse)     <- analytes
   
   return(l)
+}
+
+cytofCore.read.rd8 <- function(file, segmentSize=3200,  massCalibration=NULL, cytofType="cytof1", start_push=0, num_pushes=2^8) {
+  #returns a list with raw intensities where each row is a push and each column is the tof trace of that push.
+  #including the optional input argument of the massCalibration adds the massPeak locations to the list
+  #the massCalibration parameter is a list with names "time", "mass", and "triggerDelay". 
+  #"time" and "mass" are 2-element vectors whose values are visible in the CyTOF software mass calibration window
+  # Example:  massCalibration=list(mass=c(132.905,192.963),time=c(9597,11537),triggerDelay=8416)
+
+  
+
+  if (is.character(file)) {
+    file <- file(file, "rb")
+    on.exit(close(file))
+  }
+  
+  results=list()
+  
+  # cytof1 has 1 uint8 value per intensity sample, cytof2 has 2 uint8 values for each sample
+  if (cytofType=="cytof1") {
+    seek(file, where=start_push*segmentSize, origin="current")
+    N=readBin(file,integer(),size=1,n=num_pushes*segmentSize,signed=F)
+    intensity <- matrix(N,ncol=segmentSize,byrow=TRUE,dimnames=list(as.character(start_push:(start_push+num_pushes-1)))) 
+  } else if (cytofType=="cytof2") {
+    board1_cols <- seq(from=1, by=2, length.out=segmentSize)
+    board2_cols <- seq(from=2, by=2, length.out=segmentSize)  
+    bothBoards <- matrix(N,ncol=2*segmentSize,byrow=TRUE,dimnames=list(as.character(start_push:(start_push+num_pushes-1))))  
+    intensity=list(board1=bothBoards[,board1_cols], board2=bothBoards[,board2_cols] )
+  }
+
+  results$intensity=intensity  
+  
+  #calibrate the mass windows to the raw data
+  if (!is.null(massCalibration)) { 
+    A=(massCalibration$time[1]-massCalibration$time[2])/(sqrt(massCalibration$mass[1]) - sqrt(massCalibration$mass[2]))
+    T0=massCalibration$time[1]-A*sqrt(massCalibration$mass[1])
+    masses=102:195
+    massPeaks=T0+A*sqrt(masses) - massCalibration$triggerDelay;
+    names(massPeaks)=as.character(masses)
+  }
+  
+  # the mass peaks correspond to the columns of the intensities
+   results$massPeaks=massPeaks 
+  
+  return(results)
+    
 }
