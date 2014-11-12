@@ -4,7 +4,7 @@ The cytofCore package can be installed directly from github using the devtools p
  R>install.packages("devtools")
  R>library("devtools")
 Now install the cytofCore package
- R>install_github("cytofCore","nolanlab")
+ R>install_github("nolanlab/cytofCore")
 
 ===Editing the Panel of a set of FCS Files===
 The cytofCore.updatePanel function can be used to edit the panel written into the header of a set of FCS files. Typical edits include making spelling consistent (e.g., HLADR vs. HLA-DR), removing entire columns, re-ordering columns, etc. To use the panel editor, you must first prepare a template file with the desired panel. It can take one of two forms:
