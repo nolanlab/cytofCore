@@ -285,6 +285,8 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
     xmlChunk=c(readBin(imd, what="integer", size=2, n=chunkLength, signed=FALSE),xmlChunk)
     seek(imd,where=-4*chunkLength,origin="current")
   }
+  # return to the position at which the xmlChunk begins
+  seek(imd,where=2*chunkLength,origin="current")
   
   # convert to char and trim extra before the xml
   imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[which(xmlChunk!=0)])))
@@ -336,7 +338,7 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   newRawXml=as.raw(xmlChunk)
   newRawXml[(length(xmlChunk)-nchar(newXml)+1):length(xmlChunk)]=charToRaw(newXml)
   
-  # overwrite the old xml with the new xml
+  # overwrite the old xml with the new xml, given that the IMD file is still open at the same location
   writeBin(as.integer(newRawXml),imd,size=2)  
   close(imd)
   cat(imdFile, " has been rewritten.")
