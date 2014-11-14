@@ -339,4 +339,5 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   # overwrite the old xml with the new xml
   writeBin(as.integer(newRawXml),imd,size=2)  
   close(imd)
+  cat(imdFile, " has been rewritten.")
 }
