@@ -243,3 +243,100 @@ cytofCore.updatePanel = function(){
   }
   
 }
+
+cytofCore.averageDdCoefficients = function(folder,masses) {
+  fileList=list.files(path=folder, pattern=".conf$")
+  slopes=matrix(ncol=length(masses),nrow=length(fileList))
+  intercepts=matrix(ncol=length(masses),nrow=length(fileList))
+  for (i in 1:length(fileList)) {
+    conf=cytofCore.read.conf(file.path(folder,fileList[i]))
+    slopes[i,]=approx(conf$Mass,conf$Slope,masses,method="linear",rule=2)$y
+    intercepts[i,]=approx(conf$Mass,conf$Intercept,masses,method="linear",rule=2)$y
+  }
+  results=rbind(colMeans(slopes),colMeans(intercepts))
+  colnames(results)=masses
+  rownames(results)=c("slopes","intercepts")
+  return(results)
+}
+
+cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
+  
+  library("XML")
+  
+  # extract xml from tail of imd
+  imd <- file(imdFile, "r+b")
+  if (!isSeekable(imd)) {
+    stop("Cannot seek in specified file or connection")
+  }
+  
+  endTag="</ExperimentSchema>"
+  seek(imd,where=-2*nchar(endTag),origin="end")
+  fileEndString=paste(readBin(imd, what="character", size=2, n=2*nchar(endTag), signed=FALSE),collapse="")
+  
+  if (fileEndString != endTag) {
+    stop("The xml tail is either missing or irregular.")
+  }
+  
+  #read in chunks until the beginning of the xml is reached
+  chunkLength=1024
+  seek(imd,where=-2*chunkLength,origin="current")
+  xmlChunk=c()
+  while (!(0 %in% xmlChunk)) {
+    xmlChunk=c(readBin(imd, what="integer", size=2, n=chunkLength, signed=FALSE),xmlChunk)
+    seek(imd,where=-4*chunkLength,origin="current")
+  }
+  
+  # convert to char and trim extra before the xml
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[which(xmlChunk!=0)])))
+  
+  # parse xml
+  xmlList=xmlToList(xmlInternalTreeParse(imdString))
+  
+  # dual calibration info
+  dualList=xmlList[names(xmlList)=="DualAnalytesSnapshot"]
+  masses=c()
+  oldSlopes=c()
+  oldIntercepts=c()
+  for (metal in dualList) {
+    masses=c(masses,metal$Mass)
+    oldSlopes=c(oldSlopes,metal$DualSlope)
+    oldIntercepts=c(oldIntercepts,metal$DualIntercept)
+    #dualCalibration=rbind(dualCalibration,c(metal$Mass,metal$DualSlope, metal$DualIntercept))
+  }
+  #colnames(dualCalibration)=c("mass","slope","intercept")
+  
+  #get new coeffs
+  averagedCoeffs=cytofCore.averageDdCoefficients(confFolder,as.numeric(masses))
+  newXml=imdString
+  for (i in 1:length(masses)) {
+    
+    #make new slope string same length as old slope string
+    numChars=nchar(oldSlopes[i])
+    slopeString=as.character(averagedCoeffs["slopes",i])
+    charDiff=numChars-nchar(slopeString)
+    if (charDiff>0) {
+      slopeString=paste(slopeString,paste(rep("0",charDiff),sep="",collapse=""),sep="") 
+      } else if (charDiff<0) { slopeString=substr(slopeString,1,numChars) }
+    
+    newXml=sub(oldSlopes[i],slopeString,newXml,fixed=T)
+
+    #make new intercept string same length as old intercept string
+    numChars=nchar(oldIntercepts[i])
+    intString=as.character(averagedCoeffs["intercepts",i])
+    charDiff=numChars-nchar(intString)
+    if (charDiff>0) {
+      intString=paste(intString,paste(rep("0",charDiff),sep="",collapse=""),sep="")
+    } else if (charDiff<0) {
+      intString=substr(intString,1,numChars)
+    }
+    newXml=sub(oldIntercepts[i],intString,newXml,fixed=T)
+  }
+  
+  # convert back to raw and make new xmlChunk
+  newRawXml=as.raw(xmlChunk)
+  newRawXml[(length(xmlChunk)-nchar(newXml)+1):length(xmlChunk)]=charToRaw(newXml)
+  
+  # overwrite the old xml with the new xml
+  writeBin(as.integer(newRawXml),imd,size=2)  
+  close(imd)
+}

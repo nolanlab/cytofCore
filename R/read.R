@@ -3,6 +3,9 @@ cytofCore.read.conf <- function(file) {
 }
 
 cytofCore.read.imd.xml <- function(file) {
+  
+  library("XML")
+  
   # extract xml from tail of imd
   imd <- file(file, "rb")
   on.exit(close(imd))
@@ -55,6 +58,7 @@ cytofCore.read.imd.xml <- function(file) {
   imd.xml=list()
   imd.xml$analytes=data.frame(analytes)
   imd.xml$dualCalibration=data.frame(dualCalibration)
+  imd.xml$rawText=imdString
   
   return(imd.xml)
   
