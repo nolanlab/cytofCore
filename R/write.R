@@ -51,7 +51,7 @@ cytofCore.write.FCS <- function(x, filename, what="numeric",channelDescriptions=
 		    dl[[paste("$P",c,"N",sep="")]] <- c_name;	    # Name
 		    dl[[paste("$P",c,"S",sep="")]] <- c_desc;	    # Desc	
 		}	
-   
+
 		x <- flowFrame(x, as(data.frame(pd), "AnnotatedDataFrame"), description=dl) 
     }
     write.FCS(x, filename, what)

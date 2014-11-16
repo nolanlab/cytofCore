@@ -245,6 +245,7 @@ cytofCore.updatePanel = function(){
 }
 
 cytofCore.averageDdCoefficients = function(folder,masses) {
+  #average slopes and intercepts across a set of conf files for selected masses
   fileList=list.files(path=folder, pattern=".conf$")
   slopes=matrix(ncol=length(masses),nrow=length(fileList))
   intercepts=matrix(ncol=length(masses),nrow=length(fileList))
@@ -260,6 +261,7 @@ cytofCore.averageDdCoefficients = function(folder,masses) {
 }
 
 cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
+  #rewrite the slopes and intercepts in the dual calibration as the average from a set of conf files
   
   library("XML")
   
