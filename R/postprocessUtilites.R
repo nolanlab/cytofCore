@@ -291,8 +291,10 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   seek(imd,where=2*chunkLength,origin="current")
   
   # convert to char and trim extra before the xml
-  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[which(xmlChunk!=0)])))
-  
+  zeroInds=which(xmlChunk==0)
+  lastZeroInd=zeroInds[length(zeroInds)]
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[(lastZeroInd+1):length(xmlChunk)])))
+    
   # parse xml
   xmlList=xmlToList(xmlInternalTreeParse(imdString))
   
@@ -336,12 +338,17 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
     newXml=sub(oldIntercepts[i],intString,newXml,fixed=T)
   }
   
+  if (nchar(newXml) != (length(xmlChunk)-lastZeroInd)) {
+    stop("New xml is not same length as old xml.")
+  }
+    
   # convert back to raw and make new xmlChunk
-  newRawXml=as.raw(xmlChunk)
-  newRawXml[(length(xmlChunk)-nchar(newXml)+1):length(xmlChunk)]=charToRaw(newXml)
-  
+  #newRawXml=as.raw(xmlChunk)
+  #newRawXml[(length(xmlChunk)-nchar(newXml)+1):length(xmlChunk)]=charToRaw(newXml)
+  xmlChunk[(lastZeroInd+1):length(xmlChunk)]=as.integer(charToRaw(newXml))
+    
   # overwrite the old xml with the new xml, given that the IMD file is still open at the same location
-  writeBin(as.integer(newRawXml),imd,size=2)  
+  writeBin(xmlChunk,imd,size=2)  
   close(imd)
   cat(imdFile, " has been rewritten.")
 }

@@ -28,10 +28,13 @@ cytofCore.read.imd.xml <- function(file) {
   while (!(0 %in% xmlChunk)) {
     xmlChunk=c(readBin(imd, what="integer", size=2, n=chunkLength, signed=FALSE),xmlChunk)
     seek(imd,where=-4*chunkLength,origin="current")
+    if (length(xmlChunk)>2^17) {stop("Didn't find zeros preceding xml.")}
   }
   
   # convert to char and trim extra before the xml
-  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[which(xmlChunk!=0)])))
+  zeroInds=which(xmlChunk==0)
+  lastZeroInd=zeroInds[length(zeroInds)]
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[(lastZeroInd+1):length(xmlChunk)])))
   
   # parse xml
   xmlList=xmlToList(xmlInternalTreeParse(imdString))
