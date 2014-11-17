@@ -291,10 +291,14 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   seek(imd,where=2*chunkLength,origin="current")
   
   # convert to char and trim extra before the xml
-  zeroInds=which(xmlChunk==0)
-  lastZeroInd=zeroInds[length(zeroInds)]
-  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[(lastZeroInd+1):length(xmlChunk)])))
-    
+  startTag="<ExperimentSchema"
+  matchInd=match(utf8ToInt("<"),xmlChunk)
+  if (is.na(matchInd)) {stop("XML start tag not found")}
+
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",intToUtf8(xmlChunk[matchInd:length(xmlChunk)]))
+  
+  if (substr(imdString,1,nchar(startTag)) != startTag) {stop("XML start not aligned.")}
+  
   # parse xml
   xmlList=xmlToList(xmlInternalTreeParse(imdString))
   
@@ -338,14 +342,12 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
     newXml=sub(oldIntercepts[i],intString,newXml,fixed=T)
   }
   
-  if (nchar(newXml) != (length(xmlChunk)-lastZeroInd)) {
+  # convert back to int and make new xmlChunk
+  newXmlInt=utf8ToInt(newXml)
+  if (length(newXmlInt) != (length(xmlChunk)-matchInd + 1)) {
     stop("New xml is not same length as old xml.")
   }
-    
-  # convert back to raw and make new xmlChunk
-  #newRawXml=as.raw(xmlChunk)
-  #newRawXml[(length(xmlChunk)-nchar(newXml)+1):length(xmlChunk)]=charToRaw(newXml)
-  xmlChunk[(lastZeroInd+1):length(xmlChunk)]=as.integer(charToRaw(newXml))
+  xmlChunk[matchInd:length(xmlChunk)]=newXmlInt
     
   # overwrite the old xml with the new xml, given that the IMD file is still open at the same location
   writeBin(xmlChunk,imd,size=2)  

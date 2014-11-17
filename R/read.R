@@ -34,7 +34,8 @@ cytofCore.read.imd.xml <- function(file) {
   # convert to char and trim extra before the xml
   zeroInds=which(xmlChunk==0)
   lastZeroInd=zeroInds[length(zeroInds)]
-  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",rawToChar(as.raw(xmlChunk[(lastZeroInd+1):length(xmlChunk)])))
+  nullsRemoved=xmlChunk[(lastZeroInd+1):length(xmlChunk)]
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",intToUtf8(nullsRemoved))
   
   # parse xml
   xmlList=xmlToList(xmlInternalTreeParse(imdString))
