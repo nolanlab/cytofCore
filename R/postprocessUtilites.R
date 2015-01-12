@@ -239,7 +239,13 @@ cytofCore.updatePanel = function(){
     colnames(newData) = newChannels
     
     print(paste("Writing",file))
-    cytofCore.write.FCS(newData,file.path(newFolder,file),channelDescriptions=newMarkers,referenceDescription=description(oldFile))
+   
+    referenceDescription = NULL
+    if (templateExt=="fcs" || templateExt=="FCS") {
+      referenceDescription=description(data)
+    }
+    
+    cytofCore.write.FCS(newData,file.path(newFolder,file),channelDescriptions=newMarkers,referenceDescription=referenceDescription,oldDescription=description(oldFile))
   }
   
 }
@@ -251,6 +257,11 @@ cytofCore.averageDdCoefficients = function(folder,masses) {
   intercepts=matrix(ncol=length(masses),nrow=length(fileList))
   for (i in 1:length(fileList)) {
     conf=cytofCore.read.conf(file.path(folder,fileList[i]))
+    if (i==1) {
+      massesMeasured=conf$Mass
+      } else if (any(conf$Mass != massesMeasured)) {
+        stop("Panels of conf files are not consistent.")
+      }
     slopes[i,]=approx(conf$Mass,conf$Slope,masses,method="linear",rule=2)$y
     intercepts[i,]=approx(conf$Mass,conf$Intercept,masses,method="linear",rule=2)$y
   }
