@@ -37,6 +37,19 @@ To use the panel editor, you must load the cytofCore library, and then call the 
  R>library("cytofCore")
  R>cytofCore.updatePanel()
 
+===Adding the XML tail to an IMD File===
+In the occasional circumstance that the CyTOF software crashes or is forced to quit while still writing an IMD file, the XML tail of the IMD file that includes the panel and dual calibration information may not get written. It is necessary to add this information to the IMD file before extracting the cell events. The easiest way to do this is to copy the entire XML tail from another IMD file that has the same panel and dual calibration values. To do this:
+
+ R>library("cytofCore")
+ R>cytofCore.copyImdXml(sourceImdFilename,targetImdFilename)
+
+For example, if the name of the truncated file is ''fileWithoutXml.imd'', and the name of the template file is ''fileWithXml.imd'', the command would be
+
+ R>cytofCore.copyImdXml("fileWithXml.imd","fileWithoutXml.imd")
+
+It is strongly recommended to apply this code only to files that have been backed up. 
+
+
 
 ===Using Automator Applets===
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
