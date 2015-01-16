@@ -12,5 +12,6 @@ export(
     "cytofCore.applyFileCompensation",
     "cytofCore.batchFileCompensate",
     "cytofCore.updatePanel",
-    "cytofCore.rewriteImdCoeffs"
+    "cytofCore.rewriteImdCoeffs",
+    "cytofCore.copyImdXml"
 )
