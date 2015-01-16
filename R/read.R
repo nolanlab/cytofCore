@@ -30,12 +30,15 @@ cytofCore.read.imd.xml <- function(file) {
     seek(imd,where=-4*chunkLength,origin="current")
     if (length(xmlChunk)>2^17) {stop("Didn't find zeros preceding xml.")}
   }
-  
+
   # convert to char and trim extra before the xml
-  zeroInds=which(xmlChunk==0)
-  lastZeroInd=zeroInds[length(zeroInds)]
-  nullsRemoved=xmlChunk[(lastZeroInd+1):length(xmlChunk)]
-  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",intToUtf8(nullsRemoved))
+  startTag="<ExperimentSchema"
+  matchInd=match(utf8ToInt("<"),xmlChunk)
+  if (is.na(matchInd)) {stop("XML start tag not found")}
+  
+  imdString=sub(".*<ExperimentSchema","<ExperimentSchema",intToUtf8(xmlChunk[matchInd:length(xmlChunk)]))
+  
+  if (substr(imdString,1,nchar(startTag)) != startTag) {stop("XML start not aligned.")}
   
   # parse xml
   xmlList=xmlToList(xmlInternalTreeParse(imdString))

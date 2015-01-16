@@ -297,6 +297,7 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   while (!(0 %in% xmlChunk)) {
     xmlChunk=c(readBin(imd, what="integer", size=2, n=chunkLength, signed=FALSE),xmlChunk)
     seek(imd,where=-4*chunkLength,origin="current")
+    if (length(xmlChunk)>2^17) {stop("Didn't find zeros preceding xml.")}
   }
   # return to the position at which the xmlChunk begins
   seek(imd,where=2*chunkLength,origin="current")
@@ -364,4 +365,19 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
   writeBin(xmlChunk,imd,size=2)  
   close(imd)
   cat(imdFile, " has been rewritten.")
+}
+
+cytofCore.copyImdXml = function(sourceImd,targetImd) {
+  
+  sourceXml=cytofCore.read.imd.xml(sourceImd)
+  imdInt=utf8ToInt(sourceXml$rawText)
+  
+  imd <- file(targetImd, "ab")
+  if (!isSeekable(imd)) {
+    stop("Cannot seek in specified file or connection")
+  }
+  
+  writeBin(imdInt,imd,size=2)
+  close(imd)
+  cat("XML from ",sourceImd, " has been appended to ",targetImd)
 }
