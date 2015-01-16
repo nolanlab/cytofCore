@@ -368,16 +368,22 @@ cytofCore.rewriteImdCoeffs = function(imdFile,confFolder) {
 }
 
 cytofCore.copyImdXml = function(sourceImd,targetImd) {
+  # Write an XML Tail on an IMD file that was truncated before the tail was written by copying it from another IMD file. 
+  # Note that the other IMD file MUST have the same panel and dual slopes for this to be accurate.
+  # If you do not have another IMD file with the same panel and tail, create one with this panel. 
+  # If the dual slopes have been adjusted since the target file was acquired, it is possible to acquire in Dd mode and then rewrite the slopes with cytofCore.rewriteImdCoeffs
   
+  # read XML from source IMD file and convert to integers
   sourceXml=cytofCore.read.imd.xml(sourceImd)
   imdInt=utf8ToInt(sourceXml$rawText)
   
+  # write XML to target file
   imd <- file(targetImd, "ab")
   if (!isSeekable(imd)) {
     stop("Cannot seek in specified file or connection")
-  }
-  
+  }  
   writeBin(imdInt,imd,size=2)
   close(imd)
+  
   cat("XML from ",sourceImd, " has been appended to ",targetImd)
 }
