@@ -49,7 +49,7 @@ For example, if the name of the truncated file is ''fileWithoutXml.imd'', and th
 
 It is strongly recommended to apply this code only to files that have been backed up. 
 
-
+<!--
 
 ===Using Automator Applets===
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
@@ -76,4 +76,6 @@ Automator Applets are found in:
 
 * '''Concatenate.app'''
 ** Drag multiple FCS files onto Concatenate.app to combine them.
-** All FCS files must have identical parameters names and orders.
+** All FCS files must have identical parameters names and orders. 
+
+-->
