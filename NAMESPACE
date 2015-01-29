@@ -2,7 +2,6 @@ export(
     "cytofCore.read.imd",
     "cytofCore.read.imd.xml",
     "cytofCore.read.conf",
-    "cytofCore.read.rd8",
     "cytofCore.write.FCS",
     "cytofCore.extract.R",
     "cytofCore.combineChannels",
@@ -13,5 +12,8 @@ export(
     "cytofCore.batchFileCompensate",
     "cytofCore.updatePanel",
     "cytofCore.rewriteImdCoeffs",
-    "cytofCore.copyImdXml"
+    "cytofCore.copyImdXml",
+    "cytofCore.read.tof.calibration",
+    cytofCore.read.rd8.cytof2,
+    cytofCore.read.rd8.cytof1
 )

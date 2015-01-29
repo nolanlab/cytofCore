@@ -3,6 +3,12 @@ cytofCore.read.conf <- function(file) {
 }
 
 cytofCore.read.imd.xml <- function(file) {
+  # file is the name of an IMD file
+  # this function extracts the XML tail from the IMD file
+  # returns a list with elements "analytes", "dualCalibration" and "rawText"
+  # analytes is a data frame with columns of the mass, description and channel
+  # dualCalibration is a data frame with columns of the dual mass, slope and intercept
+  # rawText is a character string of the entire XML tail
   
   library("XML")
   
@@ -72,8 +78,11 @@ cytofCore.read.imd.xml <- function(file) {
 }
 
 cytofCore.read.imd <- function(file, conf=NULL, pulse_thresh=1.0, start_push=0, num_pushes=2^16) {
+  # returns a list with elements "intensity", "pulse" and "dual" which each have rows corresponding to pushes and columns corresponding to analytes
+  # the dual counts are computed using the Di slopes and intercepts from the XML tail of the IMD, unless a conf file is provided, in which case the Dd slopes and intercepts are used
+  # pulse_thresh is the dual count start value
   
-  # change to allow input analytes for when imd is missing tail
+  # change to allow input analytes from conf file
   if (!is.null(conf)) {
     if (is.character(conf) && file.exists(conf)) {
       conf <- cytofCore.read.conf(conf)
@@ -161,14 +170,14 @@ cytofCore.read.imd <- function(file, conf=NULL, pulse_thresh=1.0, start_push=0, 
   return(l)
 }
 
-cytofCore.read.rd8 <- function(file, segmentSize=3200,  massCalibration=NULL, cytofType="cytof1", start_push=0, num_pushes=2^8) {
+cytofCore.read.rd8.cytof1 <- function(file, segmentSize=NULL,  massCalibration=NULL, start_push=0, num_pushes=2^8) {
   #returns a list with raw intensities where each row is a push and each column is the tof trace of that push.
+  #optionally returns which column corresponds to which mass
+  #segmentSize defaults to 3200 if not specified but if this is incorrect the results won't make sense
   #including the optional input argument of the massCalibration adds the massPeak locations to the list
   #the massCalibration parameter is a list with names "time", "mass", and "triggerDelay". 
   #"time" and "mass" are 2-element vectors whose values are visible in the CyTOF software mass calibration window
   # Example:  massCalibration=list(mass=c(132.905,192.963),time=c(9597,11537),triggerDelay=8416)
-
-  
 
   if (is.character(file)) {
     file <- file(file, "rb")
@@ -177,18 +186,14 @@ cytofCore.read.rd8 <- function(file, segmentSize=3200,  massCalibration=NULL, cy
   
   results=list()
   
-  # cytof1 has 1 uint8 value per intensity sample, cytof2 has 2 uint8 values for each sample
-  if (cytofType=="cytof1") {
-    seek(file, where=start_push*segmentSize, origin="current")
+  # cytof1 has 1 uint8 value per intensity sample
+  
+    if(is.null(segmentSize)) {
+      segmentSize=3200 }
+    seek(file, where=start_push*segmentSize, origin="start")
     N=readBin(file,integer(),size=1,n=num_pushes*segmentSize,signed=F)
     intensity <- matrix(N,ncol=segmentSize,byrow=TRUE,dimnames=list(as.character(start_push:(start_push+num_pushes-1)))) 
-  } else if (cytofType=="cytof2") {
-    board1_cols <- seq(from=1, by=2, length.out=segmentSize)
-    board2_cols <- seq(from=2, by=2, length.out=segmentSize)  
-    bothBoards <- matrix(N,ncol=2*segmentSize,byrow=TRUE,dimnames=list(as.character(start_push:(start_push+num_pushes-1))))  
-    intensity=list(board1=bothBoards[,board1_cols], board2=bothBoards[,board2_cols] )
-  }
-
+    
   results$intensity=intensity  
   
   #calibrate the mass windows to the raw data
@@ -198,11 +203,100 @@ cytofCore.read.rd8 <- function(file, segmentSize=3200,  massCalibration=NULL, cy
     masses=102:195
     massPeaks=T0+A*sqrt(masses) - massCalibration$triggerDelay;
     names(massPeaks)=as.character(masses)
+    
+    # the mass peaks correspond to the columns of the intensities
+    results$massPeaks=massPeaks 
   }
-  
-  # the mass peaks correspond to the columns of the intensities
-   results$massPeaks=massPeaks 
-  
+
   return(results)
     
+}
+
+cytofCore.read.rd8.cytof2 <- function(file, referenceFCS, start_push=0, num_pushes=2^8) {
+  #returns a list with two tables of raw intensities, where each row is a push and each column is the tof trace of that push.
+  #also returns which column corresponds to which mass
+  #the mass calibration values are read in from the xml after the data segment in a cytof2 fcs file acquired with the same settings as the rd8
+  
+  if (is.character(file)) {
+    file <- file(file, "rb")
+    on.exit(close(file))
+  }
+  
+  results=list()
+  
+  # read segment size, trigger delay, A and T0 from an fcs file aquired with the same settings
+  tofCalibration=cytofCore.read.tof.calibration(referenceFCS)
+  segmentSize=tofCalibration$segmentSize
+  # cytof2 has 2 uint8 values for each sample
+ 
+
+    seek(file, where=start_push*segmentSize*2, origin="current")
+    N=readBin(file,integer(),size=1,n=num_pushes*segmentSize*2,signed=F)
+    board1_cols <- seq(from=1, by=2, length.out=segmentSize)
+    board2_cols <- seq(from=2, by=2, length.out=segmentSize)  
+    bothBoards <- matrix(N,ncol=2*segmentSize,byrow=TRUE,dimnames=list(as.character(start_push:(start_push+num_pushes-1))))  
+    intensity=list(board1=bothBoards[,board1_cols], board2=bothBoards[,board2_cols] )
+  
+  
+  results$intensity=intensity  
+  
+  #calibrate the mass windows to the raw data
+  
+    masses=89:195
+    massPeaks=tofCalibration$T0+tofCalibration$A*sqrt(masses) - tofCalibration$triggerDelay;
+    names(massPeaks)=as.character(masses)
+    
+    # the mass peaks correspond to the columns of the intensities
+    results$massPeaks=massPeaks 
+  
+  return(results)
+  
+}
+
+cytofCore.read.tof.calibration <- function(filename) {
+  # finds the segment size, trigger delay, A and T0 from the xml written after the data segment of a Cytof2 fcs file
+  
+  if (is.character(file)) {
+    file <- file(filename, "rb")
+    on.exit(close(file))
+  }
+  
+  seek(file, where=10, origin="start")
+  headerStartPos=as.integer(intToUtf8(readBin(file,"integer",n=8,size=1,signed=FALSE)))
+  headerStopPos=as.integer(intToUtf8(readBin(file,"integer",n=8,size=1,signed=FALSE)))
+  
+  seek(file, where=headerStartPos,origin="start")
+  fcsHeader=intToUtf8(readBin(file,"integer",n=headerStopPos-headerStartPos+1,size=1,signed=FALSE))
+  delimiter=substr(fcsHeader,1,1)
+  
+  # parsing of header to get enddata position
+  pattern=paste0(".*",delimiter,"\\$ENDDATA",delimiter,"(\\d+)",delimiter,".*")
+  endPos=sub(pattern,"\\1",fcsHeader)
+  
+  # move to position just after end of data
+  seek(file,where=as.integer(endPos)+1,origin="start")
+  
+  #read in chunks until the end of the xml is reached    
+  chunkLength=1024
+  xmlChunk=intToUtf8(readBin(file,what="integer",size=1,n=2*chunkLength,signed=F))
+  while (length(grep("</FCSHeaderSchema>",substr(xmlChunk,nchar(xmlChunk)-2*chunkLength+1,nchar(xmlChunk))))==0) {
+    xmlChunk=paste0(xmlChunk,intToUtf8(readBin(file, what="integer", size=1, n=chunkLength, signed=FALSE)))
+    if (nchar(xmlChunk)>2^17) {stop("Didn't find end of xml.")}
+  }
+  
+  # trim to just the xml
+  xml=sub("(.*</FCSHeaderSchema>).*","\\1",xmlChunk)
+  
+  result=list()
+  
+  # extract the tof calibration values from the xml
+  xmlList=xmlToList(xml)
+  acquisitionBoardParams=xmlList[["Acquisition"]][["AcquisitionBoardParams"]]
+  boardList=xmlToList(acquisitionBoardParams)
+  result$triggerDelay=as.integer(boardList[["Params"]][["TriggerDelay"]])
+  result$segmentSize=as.integer(boardList[["Params"]][["SegmentSize"]])
+  result$A=as.numeric(xmlList[["CalibrationResults"]][["A"]])
+  result$T0=as.numeric(xmlList[["CalibrationResults"]][["T0"]])
+  
+  return(result)
 }
