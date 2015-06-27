@@ -2,6 +2,7 @@
 ===Installation===
 The cytofCore package can be installed directly from github using the devtools package. Start R and run the following commands:
  R>install.packages("devtools")
+ R>install.packages("XML")
  R>library("devtools")
 Now install the cytofCore package
  R>install_github("nolanlab/cytofCore")
@@ -48,6 +49,10 @@ For example, if the name of the truncated file is ''fileWithoutXml.imd'', and th
  R>cytofCore.copyImdXml("fileWithXml.imd","fileWithoutXml.imd")
 
 It is strongly recommended to apply this code only to files that have been backed up. 
+
+Note that you either need to use a full path to the file, or change your working directory using setwd:
+
+ R>setwd("/path/to/directory/with/imdfiles")
 
 <!-- ===Using Automator Applets===
 Several automator applets have been included that enable drag-and-drop functionality for certain cytofCore operations. [https://github.com/nolanlab/cytofCore/archive/master.zip Download] the cytofCore source distribution to use. These should work in Mac OS X 10.6 or later. '''''Files processed by the Automator applets may ''not'' have spaces in their paths, or they will fail.''''' 
