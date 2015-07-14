@@ -4,6 +4,9 @@ The cytofCore package can be installed directly from github using the devtools p
  R>install.packages("devtools")
  R>install.packages("XML")
  R>library("devtools")
+You will need to install flowCore if you have not already:
+ R>source("http://bioconductor.org/biocLite.R")
+ R>biocLite("flowCore")
 Now install the cytofCore package
  R>install_github("nolanlab/cytofCore")
 
