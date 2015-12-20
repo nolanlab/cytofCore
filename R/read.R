@@ -53,7 +53,10 @@ cytofCore.read.imd.xml <- function(file) {
   analyteList=xmlList[names(xmlList)=="AcquisitionMarkers"]
   analytes=c()
   for (metal in analyteList) {
-    analytes=rbind(analytes,c(metal$Mass,metal$Description,metal$MassSymbol ))
+    if is.null(metal$Description) {
+      metal$Description = paste0(metal$MassSymbol, as.character(round(metal$Mass)))
+    }
+    analytes=rbind(analytes,c(metal$Mass,metal$Description,metal$MassSymbol))
   }
   
   analytes[,3]= paste(analytes[,3],as.character(round(as.numeric(analytes[,1]))),sep="")
