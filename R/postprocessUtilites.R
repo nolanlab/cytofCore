@@ -74,7 +74,7 @@ cytofCore.subtract = function(flowFrame,value=100,exclude=c(1,2)){
   return(cytofCore.updateFlowFrameKeywords(flowFrame))
 }
 
-cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeCol="Time"){
+cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=NULL,overwrite=F,timeParam="time"){
 	currentwd = getwd();
  
 	if (is.null(outputDir)){
@@ -110,25 +110,31 @@ cytofCore.concatenateDirectoryFiles = function(inputDir,outputDir=NULL,pattern=N
  	for (file in combineFiles){
  	  cat(paste("Adding",file,"\n"));
  		if (begin){
- 			combinedData = exprs(read.FCS(file));
-			if (!(timeCol %in% colnames(combinedData))){
-				stop(paste("Time Column",timeCol,"not found for file",file));		
+      fcs = read.FCS(file)
+ 			combinedData = exprs(fcs);
+      columns = colnames(combinedData)
+ 			timeCol = which(tolower(columns) == "time")
+			if (!length(timeCol)){
+				stop(paste("Time Column",timeParam,"not found for file",file));		
 			}
-		
+		  fcsDescription = description(fcs)
+      channels = parameters(fcs)$desc
 			begin=F
 		
  		} else {
 			tmpData = exprs(read.FCS(file));
- 			if (!(timeCol %in% colnames(tmpData))){
-				stop(paste("Time Column",timeCol,"not found for file",file));		
-			}
+      # check that column names are the same before concatenating
+      if (any(colnames(tmpData) != columns)) {
+        stop(paste("File", file, "does not have matching panel."));
+      }
 	 		tmpData[,timeCol] = tmpData[,timeCol]+(max(combinedData[,timeCol])+round((max(combinedData[,timeCol])-min(combinedData[,timeCol]))/nrow(combinedData)))
  			combinedData = rbind(combinedData,tmpData)
  		}
  	}
   
- 	write.FCS(cytofCore.updateFlowFrameKeywords(flowFrame(exprs=combinedData)),outputFileName);
-  rm(combinedData,tmpData);
+  # copy the channel descriptions from the first file
+	cytofCore.write.FCS(combinedData, outputFileName, what="numeric", channelDescription=channels,
+                      referenceDescription=fcsDescription, oldDescription=fcsDescription)
   gc()
   setwd(currentwd);
   return(paste(outputDir,"->",outputFileName))
