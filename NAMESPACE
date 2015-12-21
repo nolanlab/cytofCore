@@ -6,7 +6,7 @@ export(
     "cytofCore.extract.R",
     "cytofCore.combineChannels",
     "cytofCore.subtract",
-    "cytofCore.concatenateFiles",
+    "cytofCore.concatenateDirectoryFiles",
     "cytofCore.updateFlowFrameKeywords",
     "cytofCore.applyFileCompensation",
     "cytofCore.batchFileCompensate",
