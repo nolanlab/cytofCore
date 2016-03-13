@@ -32,7 +32,7 @@ The cytofCore.updatePanel function can be used to edit the panel written into th
 | DNA2
 |}
 
-You must put all the FCS files whose panels you want to update to the template's panel into a single folder. You will be asked to choose the template file, and then the folder of FCS files. When choosing the folder, you must actually enter into that folder in the selection window before clicking OK.
+You must put all the FCS files whose panels you want to update to the template's panel into a single folder.
 
 In every FCS file in the selected folder, the panel updater will search for each metal listed in the template, and then will write that metal's marker as it is written in the template. It will put the list of metals/markers in the same order in each file. If a metal is not found, it will ask whether you want to include a placeholder column of zeros, or if you want to omit that channel from that file. A subfolder called 'relabeled' will be created within the selected folder, and new FCS files will be written there.
 
@@ -40,6 +40,12 @@ To use the panel editor, you must load the cytofCore library, and then call the 
 
  R>library("cytofCore")
  R>cytofCore.updatePanel()
+
+This will prompt you to choose the template file, and then the folder of FCS files. When choosing the folder, you must actually enter into that folder in the selection window before clicking OK.
+
+You can also specify the folder and/or template directly:
+
+ R>cytofCore.updatePanel(templateFile="/path/to/templatefile", fcsFolder="/path/to/files/to/fix/")
 
 ===Adding the XML tail (or "header") to an IMD File===
 In the occasional circumstance that the CyTOF software crashes or is forced to quit while still writing an IMD file, the XML tail of the IMD file that includes the panel and dual calibration information may not get written. It is necessary to add this information to the IMD file before extracting the cell events. If you attempt to convert the IMD file to an FCS file without this, you will get a warning from the CyTOF software along the lines of "missing header." (While this is commonly called the "header," it is actually at the tail of the file.) You will also see no channels if you click "Select Channels" in the IMD analysis window. The easiest way to fix this is to copy the entire XML tail from another IMD file that has the same panel and dual calibration values. To do this:
