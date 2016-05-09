@@ -1,6 +1,6 @@
 Package: cytofCore
 Title: cytofCore: Analysis tools for CyToF Mass Cytometer Data
-Version: 0.3
+Version: 0.4
 Author: R. Bruggner, M. Linderman, R. Finck
 Description: Provides tools for working with CyToF Mass Cytometer Data
 Maintainer: R. Bruggner <bruggner@stanford.edu>
